@@ -6,6 +6,8 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/di/providers.dart';
 import '../../../../core/database/db_helpers.dart';
 import '../../../../core/database/app_database.dart';
+import '../../../../core/errors/app_error_handler.dart';
+import '../../../../core/utils/barcode_scanner_handler.dart';
 
 class ProductsView extends ConsumerStatefulWidget {
   const ProductsView({super.key});
@@ -18,17 +20,66 @@ class _ProductsViewState extends ConsumerState<ProductsView> {
   final _searchController = TextEditingController();
   String _searchQuery = '';
   int? _selectedCategoryId;
+  late final BarcodeScannerHandler _scannerHandler;
+
+  @override
+  void initState() {
+    super.initState();
+    _scannerHandler = BarcodeScannerHandler(
+      onBarcodeScanned: (barcode) {
+        if (mounted) {
+          _onHardwareBarcodeScanned(barcode);
+        }
+      },
+    );
+    _scannerHandler.start();
+  }
 
   @override
   void dispose() {
+    _scannerHandler.stop();
     _searchController.dispose();
     super.dispose();
   }
 
-  void _showAddProductDialog() {
+  Future<void> _onHardwareBarcodeScanned(String barcode) async {
+    final db = ref.read(databaseProvider);
+    final cleaned = barcode.trim();
+    if (cleaned.isEmpty) return;
+
+    final barcodeRecord = await (db.select(
+      db.productBarcodes,
+    )..where((t) => t.barcode.equals(cleaned))).getSingleOrNull();
+
+    if (barcodeRecord != null) {
+      setState(() {
+        _searchQuery = cleaned;
+        _searchController.text = cleaned;
+      });
+      if (mounted) {
+        AppErrorHandler.showSuccessSnackBar(
+          context,
+          'تم العثور على المنتج بالباركود: $cleaned',
+        );
+      }
+    } else {
+      if (mounted) {
+        _showAddProductDialog(initialBarcode: cleaned);
+      }
+    }
+  }
+
+  void _showAddProductDialog({String? initialBarcode}) {
     showDialog(
       context: context,
-      builder: (context) => const AddProductDialog(),
+      builder: (context) => AddProductDialog(initialBarcode: initialBarcode),
+    );
+  }
+
+  void _showScanBarcodeAddDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => const ScanBarcodeAddDialog(),
     );
   }
 
@@ -79,7 +130,10 @@ class _ProductsViewState extends ConsumerState<ProductsView> {
               foregroundColor: Colors.white,
             ),
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('حذف المنتج', style: TextStyle(fontFamily: 'Cairo')),
+            child: const Text(
+              'حذف المنتج',
+              style: TextStyle(fontFamily: 'Cairo'),
+            ),
           ),
         ],
       ),
@@ -152,11 +206,40 @@ class _ProductsViewState extends ConsumerState<ProductsView> {
                   ),
                 ),
                 ElevatedButton.icon(
-                  onPressed: _showAddProductDialog,
-                  icon: const Icon(LucideIcons.plus, size: 16),
+                  onPressed: _showScanBarcodeAddDialog,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.info,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                  ),
+                  icon: const Icon(LucideIcons.scanLine, size: 18),
+                  label: const Text(
+                    'إضافة بالباركود',
+                    style: TextStyle(
+                      fontFamily: 'Cairo',
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                ElevatedButton.icon(
+                  onPressed: () => _showAddProductDialog(),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                  ),
+                  icon: const Icon(LucideIcons.plus, size: 18),
                   label: const Text(
                     'منتج جديد',
-                    style: TextStyle(fontFamily: 'Cairo'),
+                    style: TextStyle(
+                      fontFamily: 'Cairo',
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ],
@@ -244,11 +327,13 @@ class _ProductsViewState extends ConsumerState<ProductsView> {
                 child: productsAsync.when(
                   data: (products) {
                     final filtered = products.where((p) {
-                      final matchesSearch = _searchQuery.isEmpty ||
+                      final matchesSearch =
+                          _searchQuery.isEmpty ||
                           p.nameAr.contains(_searchQuery) ||
                           (p.internalCode != null &&
                               p.internalCode!.contains(_searchQuery));
-                      final matchesCat = _selectedCategoryId == null ||
+                      final matchesCat =
+                          _selectedCategoryId == null ||
                           p.categoryId == _selectedCategoryId;
                       return matchesSearch && matchesCat;
                     }).toList();
@@ -341,15 +426,16 @@ class _ProductsViewState extends ConsumerState<ProductsView> {
                                             ),
                                           ),
                                           if (product.internalCode != null &&
-                                              product.internalCode!
+                                              product
+                                                  .internalCode!
                                                   .isNotEmpty) ...[
                                             const SizedBox(width: 8),
                                             Container(
                                               padding:
                                                   const EdgeInsets.symmetric(
-                                                horizontal: 6,
-                                                vertical: 2,
-                                              ),
+                                                    horizontal: 6,
+                                                    vertical: 2,
+                                                  ),
                                               decoration: BoxDecoration(
                                                 color: Colors.grey.shade200,
                                                 borderRadius:
@@ -411,24 +497,30 @@ class _ProductsViewState extends ConsumerState<ProductsView> {
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     IconButton(
-                                      icon: const Icon(LucideIcons.eye,
-                                          size: 18),
+                                      icon: const Icon(
+                                        LucideIcons.eye,
+                                        size: 18,
+                                      ),
                                       color: AppColors.primary,
                                       tooltip: 'عرض التفاصيل',
                                       onPressed: () =>
                                           _showProductDetailsDialog(product),
                                     ),
                                     IconButton(
-                                      icon: const Icon(LucideIcons.edit2,
-                                          size: 18),
+                                      icon: const Icon(
+                                        LucideIcons.edit2,
+                                        size: 18,
+                                      ),
                                       color: AppColors.textSecondary,
                                       tooltip: 'تعديل البيانات',
                                       onPressed: () =>
                                           _showEditProductDialog(product),
                                     ),
                                     IconButton(
-                                      icon: const Icon(LucideIcons.trash2,
-                                          size: 18),
+                                      icon: const Icon(
+                                        LucideIcons.trash2,
+                                        size: 18,
+                                      ),
                                       color: AppColors.error,
                                       tooltip: 'حذف المنتج',
                                       onPressed: () =>
@@ -591,8 +683,7 @@ class ProductDetailsDialog extends ConsumerWidget {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color:
-                            isLowStock ? AppColors.error : AppColors.success,
+                        color: isLowStock ? AppColors.error : AppColors.success,
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
@@ -666,11 +757,13 @@ class ProductDetailsDialog extends ConsumerWidget {
               ),
               const SizedBox(height: 10),
               FutureBuilder<ProductBarcode?>(
-                future: (db.select(db.productBarcodes)
-                      ..where((t) =>
-                          t.productId.equals(product.id) &
-                          t.isPrimary.equals(true)))
-                    .getSingleOrNull(),
+                future:
+                    (db.select(db.productBarcodes)..where(
+                          (t) =>
+                              t.productId.equals(product.id) &
+                              t.isPrimary.equals(true),
+                        ))
+                        .getSingleOrNull(),
                 builder: (context, snapshot) {
                   final barcodeStr = snapshot.data?.barcode ?? 'غير مسجل';
                   return _buildDetailRow(
@@ -713,18 +806,23 @@ class ProductDetailsDialog extends ConsumerWidget {
                       Navigator.of(context).pop();
                       showDialog(
                         context: context,
-                        builder: (context) => EditProductDialog(product: product),
+                        builder: (context) =>
+                            EditProductDialog(product: product),
                       );
                     },
                     icon: const Icon(LucideIcons.edit2, size: 16),
-                    label: const Text('تعديل البيانات',
-                        style: TextStyle(fontFamily: 'Cairo')),
+                    label: const Text(
+                      'تعديل البيانات',
+                      style: TextStyle(fontFamily: 'Cairo'),
+                    ),
                   ),
                   const SizedBox(width: 12),
                   ElevatedButton(
                     onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('إغلاق',
-                        style: TextStyle(fontFamily: 'Cairo')),
+                    child: const Text(
+                      'إغلاق',
+                      style: TextStyle(fontFamily: 'Cairo'),
+                    ),
                   ),
                 ],
               ),
@@ -833,17 +931,22 @@ class _EditProductDialogState extends ConsumerState<EditProductDialog> {
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.product.nameAr);
-    _codeController =
-        TextEditingController(text: widget.product.internalCode ?? '');
+    _codeController = TextEditingController(
+      text: widget.product.internalCode ?? '',
+    );
     _barcodeController = TextEditingController();
-    _purchasePriceController =
-        TextEditingController(text: widget.product.purchasePrice.toString());
-    _retailPriceController =
-        TextEditingController(text: widget.product.retailPrice.toString());
-    _wholesalePriceController =
-        TextEditingController(text: widget.product.wholesalePrice.toString());
-    _minQtyController =
-        TextEditingController(text: widget.product.minQuantity.toString());
+    _purchasePriceController = TextEditingController(
+      text: widget.product.purchasePrice.toString(),
+    );
+    _retailPriceController = TextEditingController(
+      text: widget.product.retailPrice.toString(),
+    );
+    _wholesalePriceController = TextEditingController(
+      text: widget.product.wholesalePrice.toString(),
+    );
+    _minQtyController = TextEditingController(
+      text: widget.product.minQuantity.toString(),
+    );
     _selectedCategoryId = widget.product.categoryId;
 
     _loadBarcode();
@@ -851,11 +954,13 @@ class _EditProductDialogState extends ConsumerState<EditProductDialog> {
 
   Future<void> _loadBarcode() async {
     final db = ref.read(databaseProvider);
-    final barcodeObj = await (db.select(db.productBarcodes)
-          ..where((t) =>
-              t.productId.equals(widget.product.id) &
-              t.isPrimary.equals(true)))
-        .getSingleOrNull();
+    final barcodeObj =
+        await (db.select(db.productBarcodes)..where(
+              (t) =>
+                  t.productId.equals(widget.product.id) &
+                  t.isPrimary.equals(true),
+            ))
+            .getSingleOrNull();
     if (barcodeObj != null && mounted) {
       _barcodeController.text = barcodeObj.barcode;
     }
@@ -892,8 +997,7 @@ class _EditProductDialogState extends ConsumerState<EditProductDialog> {
         categoryId: _selectedCategoryId,
         purchasePrice:
             double.tryParse(_purchasePriceController.text.trim()) ?? 0.0,
-        retailPrice:
-            double.tryParse(_retailPriceController.text.trim()) ?? 0.0,
+        retailPrice: double.tryParse(_retailPriceController.text.trim()) ?? 0.0,
         wholesalePrice:
             double.tryParse(_wholesalePriceController.text.trim()) ?? 0.0,
         minQuantity: double.tryParse(_minQtyController.text.trim()) ?? 0.0,
@@ -1007,16 +1111,23 @@ class _EditProductDialogState extends ConsumerState<EditProductDialog> {
                       items: [
                         const DropdownMenuItem<int?>(
                           value: null,
-                          child: Text('بدون تصنيف', style: TextStyle(fontFamily: 'Cairo')),
+                          child: Text(
+                            'بدون تصنيف',
+                            style: TextStyle(fontFamily: 'Cairo'),
+                          ),
                         ),
                         ...categories.map(
                           (c) => DropdownMenuItem<int?>(
                             value: c.id,
-                            child: Text(c.name, style: const TextStyle(fontFamily: 'Cairo')),
+                            child: Text(
+                              c.name,
+                              style: const TextStyle(fontFamily: 'Cairo'),
+                            ),
                           ),
                         ),
                       ],
-                      onChanged: (val) => setState(() => _selectedCategoryId = val),
+                      onChanged: (val) =>
+                          setState(() => _selectedCategoryId = val),
                     );
                   },
                   loading: () => const SizedBox.shrink(),
@@ -1074,7 +1185,10 @@ class _EditProductDialogState extends ConsumerState<EditProductDialog> {
                   children: [
                     OutlinedButton(
                       onPressed: () => Navigator.of(context).pop(),
-                      child: const Text('إلغاء', style: TextStyle(fontFamily: 'Cairo')),
+                      child: const Text(
+                        'إلغاء',
+                        style: TextStyle(fontFamily: 'Cairo'),
+                      ),
                     ),
                     const SizedBox(width: 12),
                     ElevatedButton(
@@ -1085,7 +1199,10 @@ class _EditProductDialogState extends ConsumerState<EditProductDialog> {
                               height: 20,
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
-                          : const Text('حفظ التغييرات', style: TextStyle(fontFamily: 'Cairo')),
+                          : const Text(
+                              'حفظ التغييرات',
+                              style: TextStyle(fontFamily: 'Cairo'),
+                            ),
                     ),
                   ],
                 ),
@@ -1100,7 +1217,8 @@ class _EditProductDialogState extends ConsumerState<EditProductDialog> {
 
 /// Dialog to add a new product
 class AddProductDialog extends ConsumerStatefulWidget {
-  const AddProductDialog({super.key});
+  final String? initialBarcode;
+  const AddProductDialog({super.key, this.initialBarcode});
 
   @override
   ConsumerState<AddProductDialog> createState() => _AddProductDialogState();
@@ -1118,9 +1236,33 @@ class _AddProductDialogState extends ConsumerState<AddProductDialog> {
   final _minQtyController = TextEditingController(text: '5');
   int? _selectedCategoryId;
   bool _isLoading = false;
+  late final BarcodeScannerHandler _dialogScanner;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialBarcode != null && widget.initialBarcode!.isNotEmpty) {
+      _barcodeController.text = widget.initialBarcode!;
+    }
+    _dialogScanner = BarcodeScannerHandler(
+      onBarcodeScanned: (barcode) {
+        if (mounted) {
+          setState(() {
+            _barcodeController.text = barcode;
+          });
+          AppErrorHandler.showSuccessSnackBar(
+            context,
+            'تم التقاط الباركود: $barcode',
+          );
+        }
+      },
+    );
+    _dialogScanner.start();
+  }
 
   @override
   void dispose() {
+    _dialogScanner.stop();
     _nameController.dispose();
     _codeController.dispose();
     _barcodeController.dispose();
@@ -1152,8 +1294,7 @@ class _AddProductDialogState extends ConsumerState<AddProductDialog> {
         categoryId: _selectedCategoryId,
         purchasePrice:
             double.tryParse(_purchasePriceController.text.trim()) ?? 0.0,
-        retailPrice:
-            double.tryParse(_retailPriceController.text.trim()) ?? 0.0,
+        retailPrice: double.tryParse(_retailPriceController.text.trim()) ?? 0.0,
         wholesalePrice:
             double.tryParse(_wholesalePriceController.text.trim()) ?? 0.0,
         initialQuantity:
@@ -1269,16 +1410,23 @@ class _AddProductDialogState extends ConsumerState<AddProductDialog> {
                       items: [
                         const DropdownMenuItem<int?>(
                           value: null,
-                          child: Text('بدون تصنيف', style: TextStyle(fontFamily: 'Cairo')),
+                          child: Text(
+                            'بدون تصنيف',
+                            style: TextStyle(fontFamily: 'Cairo'),
+                          ),
                         ),
                         ...categories.map(
                           (c) => DropdownMenuItem<int?>(
                             value: c.id,
-                            child: Text(c.name, style: const TextStyle(fontFamily: 'Cairo')),
+                            child: Text(
+                              c.name,
+                              style: const TextStyle(fontFamily: 'Cairo'),
+                            ),
                           ),
                         ),
                       ],
-                      onChanged: (val) => setState(() => _selectedCategoryId = val),
+                      onChanged: (val) =>
+                          setState(() => _selectedCategoryId = val),
                     );
                   },
                   loading: () => const SizedBox.shrink(),
@@ -1377,6 +1525,310 @@ class _AddProductDialogState extends ConsumerState<AddProductDialog> {
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Dialog for rapid scanning to find or add products
+class ScanBarcodeAddDialog extends ConsumerStatefulWidget {
+  const ScanBarcodeAddDialog({super.key});
+
+  @override
+  ConsumerState<ScanBarcodeAddDialog> createState() =>
+      _ScanBarcodeAddDialogState();
+}
+
+class _ScanBarcodeAddDialogState extends ConsumerState<ScanBarcodeAddDialog> {
+  final _barcodeInputController = TextEditingController();
+  late final BarcodeScannerHandler _scannerHandler;
+  bool _isSearching = false;
+  String? _lastScannedBarcode;
+  Product? _foundProduct;
+  bool _hasSearched = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _scannerHandler = BarcodeScannerHandler(
+      onBarcodeScanned: (barcode) {
+        if (mounted) {
+          _barcodeInputController.text = barcode;
+          _processBarcode(barcode);
+        }
+      },
+    );
+    _scannerHandler.start();
+  }
+
+  @override
+  void dispose() {
+    _scannerHandler.stop();
+    _barcodeInputController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _processBarcode(String barcode) async {
+    final cleaned = barcode.trim();
+    if (cleaned.isEmpty) return;
+
+    setState(() {
+      _isSearching = true;
+      _lastScannedBarcode = cleaned;
+      _hasSearched = true;
+      _foundProduct = null;
+    });
+
+    try {
+      final db = ref.read(databaseProvider);
+      final barcodeRecord = await (db.select(
+        db.productBarcodes,
+      )..where((t) => t.barcode.equals(cleaned))).getSingleOrNull();
+
+      if (barcodeRecord != null) {
+        final product =
+            await (db.select(db.products)
+                  ..where((t) => t.id.equals(barcodeRecord.productId)))
+                .getSingleOrNull();
+
+        setState(() {
+          _foundProduct = product;
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSearching = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Container(
+        width: 500,
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppColors.primarySurface,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    LucideIcons.scanLine,
+                    color: AppColors.primary,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'ماسح الباركود السريع',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: 'Cairo',
+                        ),
+                      ),
+                      Text(
+                        'قم بمسح باركود المنتج لإضافته أو البحث عنه',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppColors.textSecondary,
+                          fontFamily: 'Cairo',
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  icon: const Icon(LucideIcons.x, size: 20),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            TextField(
+              controller: _barcodeInputController,
+              autofocus: true,
+              style: const TextStyle(
+                fontFamily: 'Cairo',
+                fontWeight: FontWeight.bold,
+              ),
+              decoration: InputDecoration(
+                labelText: 'رقم الباركود',
+                hintText: 'وجّه الماسح أو اكتب الباركود هنا...',
+                prefixIcon: const Icon(LucideIcons.scanLine),
+                suffixIcon: IconButton(
+                  icon: const Icon(LucideIcons.arrowRight),
+                  onPressed: () =>
+                      _processBarcode(_barcodeInputController.text),
+                ),
+                border: const OutlineInputBorder(),
+              ),
+              onSubmitted: _processBarcode,
+            ),
+            const SizedBox(height: 20),
+            if (_isSearching)
+              const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: CircularProgressIndicator(),
+                ),
+              )
+            else if (_hasSearched) ...[
+              if (_foundProduct != null) ...[
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.green.shade50,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.green.shade200),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        LucideIcons.checkCircle2,
+                        color: Colors.green,
+                        size: 32,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _foundProduct!.nameAr,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: 'Cairo',
+                              ),
+                            ),
+                            Text(
+                              'سعر البيع: ${_foundProduct!.retailPrice} ج.م | المخزون: ${_foundProduct!.currentQuantity}',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.green.shade900,
+                                fontFamily: 'Cairo',
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ] else ...[
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.amber.shade50,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.amber.shade200),
+                  ),
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(
+                            LucideIcons.alertCircle,
+                            color: Colors.amber,
+                            size: 28,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              'الباركود "$_lastScannedBarcode" غير مسجل لقواعد البيانات',
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: 'Cairo',
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                            showDialog(
+                              context: context,
+                              builder: (context) => AddProductDialog(
+                                initialBarcode: _lastScannedBarcode,
+                              ),
+                            );
+                          },
+                          icon: const Icon(LucideIcons.plus),
+                          label: const Text(
+                            'إضافة هذا المنتج الآن',
+                            style: TextStyle(
+                              fontFamily: 'Cairo',
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ] else ...[
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: AppColors.background,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Center(
+                  child: Column(
+                    children: [
+                      Icon(
+                        LucideIcons.scan,
+                        size: 48,
+                        color: AppColors.textSecondary,
+                      ),
+                      SizedBox(height: 12),
+                      Text(
+                        'بانتظار مسح الباركود من قارئ الباركود...',
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontFamily: 'Cairo',
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text(
+                    'إغلاق',
+                    style: TextStyle(fontFamily: 'Cairo'),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );

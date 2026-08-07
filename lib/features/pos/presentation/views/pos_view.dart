@@ -10,6 +10,7 @@ import '../../../../core/di/providers.dart';
 import '../../../../core/database/app_database.dart';
 import '../../../../core/database/db_helpers.dart';
 import '../../../../core/errors/app_error_handler.dart';
+import '../../../../core/utils/barcode_scanner_handler.dart';
 
 /// Point of Sale - Full screen view
 class PosView extends ConsumerStatefulWidget {
@@ -22,6 +23,7 @@ class PosView extends ConsumerStatefulWidget {
 class _PosViewState extends ConsumerState<PosView> {
   final _barcodeController = TextEditingController();
   final _barcodeFocus = FocusNode();
+  late final BarcodeScannerHandler _scannerHandler;
 
   final List<PosCartItem> _cartItems = [];
   Customer? _selectedCustomer;
@@ -34,10 +36,20 @@ class _PosViewState extends ConsumerState<PosView> {
     super.initState();
     _barcodeFocus.requestFocus();
     _loadSuspendedCount();
+
+    _scannerHandler = BarcodeScannerHandler(
+      onBarcodeScanned: (barcode) {
+        if (mounted) {
+          _searchAndAddProduct(barcode);
+        }
+      },
+    );
+    _scannerHandler.start();
   }
 
   @override
   void dispose() {
+    _scannerHandler.stop();
     _barcodeController.dispose();
     _barcodeFocus.dispose();
     super.dispose();
