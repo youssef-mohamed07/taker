@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter/services.dart';
 import '../theme/app_colors.dart';
 
@@ -66,18 +67,18 @@ class AppErrorHandler {
           child: Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(6),
+                padding: EdgeInsets.all(6.w),
                 decoration: BoxDecoration(
                   color: AppColors.error.withValues(alpha: 0.2),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.error_outline_rounded,
                   color: AppColors.surface,
                   size: 20,
                 ),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: 12.w),
               Expanded(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -85,19 +86,19 @@ class AppErrorHandler {
                   children: [
                     Text(
                       customTitle ?? 'حدث خطأ',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'Cairo',
                         fontWeight: FontWeight.bold,
-                        fontSize: 13,
+                        fontSize: 13.sp,
                         color: AppColors.surface,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    SizedBox(height: 2.h),
                     Text(
                       message,
                       style: TextStyle(
                         fontFamily: 'Cairo',
-                        fontSize: 12,
+                        fontSize: 12.sp,
                         color: AppColors.surface.withValues(alpha: 0.95),
                       ),
                       maxLines: 3,
@@ -108,7 +109,7 @@ class AppErrorHandler {
               ),
               if (rawDetails != message && rawDetails.length > 30)
                 IconButton(
-                  icon: const Icon(Icons.info_outline, color: AppColors.surface, size: 20),
+                  icon: Icon(Icons.info_outline, color: AppColors.surface, size: 20),
                   tooltip: 'التفاصيل التقنية',
                   onPressed: () {
                     showErrorDialog(context, error);
@@ -119,8 +120,8 @@ class AppErrorHandler {
         ),
         backgroundColor: AppColors.error,
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        margin: const EdgeInsets.all(16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.r)),
+        margin: EdgeInsets.all(16.w),
         duration: const Duration(seconds: 4),
       ),
     );
@@ -137,14 +138,14 @@ class AppErrorHandler {
           textDirection: TextDirection.rtl,
           child: Row(
             children: [
-              const Icon(Icons.check_circle_rounded, color: AppColors.surface, size: 22),
-              const SizedBox(width: 12),
+              Icon(Icons.check_circle_rounded, color: AppColors.surface, size: 22),
+              SizedBox(width: 12.w),
               Expanded(
                 child: Text(
                   message,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'Cairo',
-                    fontSize: 13,
+                    fontSize: 13.sp,
                     fontWeight: FontWeight.w600,
                     color: AppColors.surface,
                   ),
@@ -155,8 +156,8 @@ class AppErrorHandler {
         ),
         backgroundColor: AppColors.success,
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        margin: const EdgeInsets.all(16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.r)),
+        margin: EdgeInsets.all(16.w),
         duration: const Duration(seconds: 3),
       ),
     );
@@ -173,14 +174,14 @@ class AppErrorHandler {
           textDirection: TextDirection.rtl,
           child: Row(
             children: [
-              const Icon(Icons.warning_amber_rounded, color: AppColors.textPrimary, size: 22),
-              const SizedBox(width: 12),
+              Icon(Icons.warning_amber_rounded, color: AppColors.textPrimary, size: 22),
+              SizedBox(width: 12.w),
               Expanded(
                 child: Text(
                   message,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'Cairo',
-                    fontSize: 13,
+                    fontSize: 13.sp,
                     fontWeight: FontWeight.w600,
                     color: AppColors.textPrimary,
                   ),
@@ -191,8 +192,8 @@ class AppErrorHandler {
         ),
         backgroundColor: AppColors.warning,
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        margin: const EdgeInsets.all(16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.r)),
+        margin: EdgeInsets.all(16.w),
         duration: const Duration(seconds: 3),
       ),
     );
@@ -220,12 +221,12 @@ class AppErrorHandler {
             return Directionality(
               textDirection: TextDirection.rtl,
               child: AlertDialog(
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
                 titlePadding: EdgeInsets.zero,
                 contentPadding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
                 title: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                  decoration: const BoxDecoration(
+                  padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
+                  decoration: BoxDecoration(
                     color: AppColors.errorLight,
                     borderRadius: BorderRadius.only(
                       topLeft: Radius.circular(16),
@@ -235,25 +236,25 @@ class AppErrorHandler {
                   child: Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: const BoxDecoration(
+                        padding: EdgeInsets.all(8.w),
+                        decoration: BoxDecoration(
                           color: AppColors.error,
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.error_outline_rounded,
                           color: Colors.white,
                           size: 24,
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      SizedBox(width: 12.w),
                       Expanded(
                         child: Text(
                           title ?? 'تنبيه خطأ',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontFamily: 'Cairo',
                             fontWeight: FontWeight.bold,
-                            fontSize: 16,
+                            fontSize: 16.sp,
                             color: AppColors.textPrimary,
                           ),
                         ),
@@ -262,30 +263,30 @@ class AppErrorHandler {
                   ),
                 ),
                 content: SizedBox(
-                  width: 440,
+                  width: 440.w,
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         userMessage,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: 'Cairo',
-                          fontSize: 14,
+                          fontSize: 14.sp,
                           color: AppColors.textPrimary,
-                          height: 1.5,
+                          height: 1.5.h,
                         ),
                       ),
-                      const SizedBox(height: 12),
+                      SizedBox(height: 12.h),
                       InkWell(
                         onTap: () {
                           setState(() {
                             showDetails = !showDetails;
                           });
                         },
-                        borderRadius: BorderRadius.circular(6),
+                        borderRadius: BorderRadius.circular(6.r),
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          padding: EdgeInsets.symmetric(vertical: 4.h),
                           child: Row(
                             children: [
                               Icon(
@@ -295,12 +296,12 @@ class AppErrorHandler {
                                 color: AppColors.textSecondary,
                                 size: 20,
                               ),
-                              const SizedBox(width: 4),
+                              SizedBox(width: 4.w),
                               Text(
                                 showDetails ? 'إخفاء التفاصيل التقنية' : 'عرض التفاصيل التقنية',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontFamily: 'Cairo',
-                                  fontSize: 12,
+                                  fontSize: 12.sp,
                                   color: AppColors.textSecondary,
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -310,38 +311,38 @@ class AppErrorHandler {
                         ),
                       ),
                       if (showDetails) ...[
-                        const SizedBox(height: 8),
+                        SizedBox(height: 8.h),
                         Container(
                           width: double.infinity,
-                          padding: const EdgeInsets.all(12),
+                          padding: EdgeInsets.all(12.w),
                           decoration: BoxDecoration(
                             color: AppColors.surfaceVariant,
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: BorderRadius.circular(8.r),
                             border: Border.all(color: AppColors.border),
                           ),
                           constraints: const BoxConstraints(maxHeight: 140),
                           child: SingleChildScrollView(
                             child: SelectableText(
                               rawDetails,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontFamily: 'monospace',
-                                fontSize: 11,
+                                fontSize: 11.sp,
                                 color: AppColors.textSecondary,
                               ),
                             ),
                           ),
                         ),
-                        const SizedBox(height: 6),
+                        SizedBox(height: 6.h),
                         Align(
                           alignment: Alignment.centerLeft,
                           child: TextButton.icon(
                             style: TextButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
                               minimumSize: Size.zero,
                               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                             ),
-                            icon: const Icon(Icons.copy, size: 14),
-                            label: const Text('نسخ الخطأ', style: TextStyle(fontFamily: 'Cairo', fontSize: 11)),
+                            icon: Icon(Icons.copy, size: 14),
+                            label: Text('نسخ الخطأ', style: TextStyle(fontFamily: 'Cairo', fontSize: 11.sp)),
                             onPressed: () {
                               Clipboard.setData(ClipboardData(text: rawDetails));
                               showSuccessSnackBar(context, 'تم نسخ تفاصيل الخطأ');
@@ -358,18 +359,18 @@ class AppErrorHandler {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
                         foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
                       ),
                       onPressed: () {
                         Navigator.pop(dialogContext);
                         onRetry();
                       },
-                      icon: const Icon(Icons.refresh, size: 18),
-                      label: const Text('إعادة المحاولة', style: TextStyle(fontFamily: 'Cairo')),
+                      icon: Icon(Icons.refresh, size: 18),
+                      label: Text('إعادة المحاولة', style: TextStyle(fontFamily: 'Cairo')),
                     ),
                   TextButton(
                     onPressed: () => Navigator.pop(dialogContext),
-                    child: const Text('موافق', style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold)),
+                    child: Text('موافق', style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold)),
                   ),
                 ],
               ),

@@ -30,6 +30,120 @@ class _SuppliersViewState extends ConsumerState<SuppliersView> {
     );
   }
 
+
+  void _showPayDebtDialog(Supplier supplier) {
+    if (supplier.balance <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('المورد ليس له مستحقات.'),
+          backgroundColor: AppColors.success,
+        ),
+      );
+      return;
+    }
+
+    final formKey = GlobalKey<FormState>();
+    final amountController = TextEditingController(text: supplier.balance.toStringAsFixed(2));
+    final notesController = TextEditingController();
+    bool isLoading = false;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: Text('سداد دفعة للمورد: ${supplier.name}', style: const TextStyle(fontFamily: 'Cairo')),
+              content: Form(
+                key: formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'إجمالي المستحق: ${supplier.balance.toStringAsFixed(2)} ج.م',
+                      style: const TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold, color: AppColors.warning),
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: amountController,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                        labelText: 'المبلغ المسدد (ج.م)',
+                        border: OutlineInputBorder(),
+                      ),
+                      validator: (val) {
+                        if (val == null || val.isEmpty) return 'مطلوب';
+                        final num = double.tryParse(val);
+                        if (num == null || num <= 0) return 'قيمة غير صالحة';
+                        if (num > supplier.balance) return 'المبلغ يتجاوز المستحق';
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: notesController,
+                      decoration: const InputDecoration(
+                        labelText: 'ملاحظات (اختياري)',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('إلغاء', style: TextStyle(fontFamily: 'Cairo')),
+                ),
+                ElevatedButton(
+                  onPressed: isLoading
+                      ? null
+                      : () async {
+                          if (!formKey.currentState!.validate()) return;
+                          setDialogState(() => isLoading = true);
+                          try {
+                            final db = ref.read(databaseProvider);
+                            final amount = double.parse(amountController.text);
+                            await DbHelpers.paySupplierDebt(
+                              db,
+                              supplierId: supplier.id,
+                              amount: amount,
+                              userId: 1, // Currently hardcoded user 1
+                              notes: notesController.text.isNotEmpty ? notesController.text : null,
+                            );
+                            if (mounted) {
+                              Navigator.pop(context);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('تم السداد بنجاح وخصم المبلغ من الخزنة.'),
+                                  backgroundColor: AppColors.success,
+                                ),
+                              );
+                              ref.invalidate(suppliersStreamProvider);
+                            }
+                          } catch (e) {
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('خطأ: $e')),
+                              );
+                            }
+                          } finally {
+                            setDialogState(() => isLoading = false);
+                          }
+                        },
+                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+                  child: isLoading
+                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                      : const Text('تأكيد السداد', style: TextStyle(fontFamily: 'Cairo', color: Colors.white)),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
   void _showSupplierDetailsDialog(Supplier supplier) {
     showDialog(
       context: context,
@@ -358,6 +472,14 @@ class _SuppliersViewState extends ConsumerState<SuppliersView> {
                                 Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
+                                    if (supplier.balance > 0)
+                                      IconButton(
+                                        icon: const Icon(LucideIcons.wallet, size: 18),
+                                        tooltip: 'سداد دفعة',
+                                        color: AppColors.warning,
+                                        onPressed: () =>
+                                            _showPayDebtDialog(supplier),
+                                      ),
                                     IconButton(
                                       icon: const Icon(LucideIcons.eye,
                                           size: 18),

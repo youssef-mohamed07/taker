@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -14,7 +15,8 @@ import '../../../../core/utils/barcode_scanner_handler.dart';
 
 /// Point of Sale - Full screen view
 class PosView extends ConsumerStatefulWidget {
-  const PosView({super.key});
+  final Map<String, dynamic>? initialData;
+  const PosView({super.key, this.initialData});
 
   @override
   ConsumerState<PosView> createState() => _PosViewState();
@@ -36,6 +38,15 @@ class _PosViewState extends ConsumerState<PosView> {
     super.initState();
     _barcodeFocus.requestFocus();
     _loadSuspendedCount();
+    
+    if (widget.initialData != null) {
+      if (widget.initialData!['customer'] != null) {
+        _selectedCustomer = widget.initialData!['customer'];
+      }
+      if (widget.initialData!['items'] != null) {
+        _cartItems.addAll(widget.initialData!['items'] as List<PosCartItem>);
+      }
+    }
 
     _scannerHandler = BarcodeScannerHandler(
       onBarcodeScanned: (barcode) {
@@ -257,52 +268,52 @@ class _PosViewState extends ConsumerState<PosView> {
             textDirection: TextDirection.rtl,
             child: AlertDialog(
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16)),
+                  borderRadius: BorderRadius.circular(16.r)),
               title: Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(8),
+                    padding: EdgeInsets.all(8.w),
                     decoration: BoxDecoration(
                       color: AppColors.primarySurface,
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(8.r),
                     ),
-                    child: const Icon(LucideIcons.package,
+                    child: Icon(LucideIcons.package,
                         color: AppColors.primary),
                   ),
-                  const SizedBox(width: 10),
+                  SizedBox(width: 10.w),
                   Text(
                     'اختر من القائمة (${filtered.length})',
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontFamily: 'Cairo', fontWeight: FontWeight.bold),
                   ),
                   const Spacer(),
                   IconButton(
-                    icon: const Icon(LucideIcons.x),
+                    icon: Icon(LucideIcons.x),
                     onPressed: () => Navigator.pop(dialogContext),
                   ),
                 ],
               ),
               content: SizedBox(
-                width: 500,
-                height: 400,
+                width: 500.w,
+                height: 400.h,
                 child: Column(
                   children: [
                     TextField(
                       controller: searchCtrl,
                       decoration: InputDecoration(
                         hintText: 'تصفية باسم أو كود المنتج...',
-                        prefixIcon: const Icon(LucideIcons.search, size: 18),
+                        prefixIcon: Icon(LucideIcons.search, size: 18),
                         border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10)),
-                        contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 10),
+                            borderRadius: BorderRadius.circular(10.r)),
+                        contentPadding: EdgeInsets.symmetric(
+                            horizontal: 12.w, vertical: 10.h),
                       ),
                       onChanged: (_) => setDialogState(() {}),
                     ),
-                    const SizedBox(height: 12),
+                    SizedBox(height: 12.h),
                     Expanded(
                       child: filtered.isEmpty
-                          ? const Center(
+                          ? Center(
                               child: Text(
                                 'لا توجد منتجات تطابق البحث',
                                 style: TextStyle(
@@ -313,21 +324,21 @@ class _PosViewState extends ConsumerState<PosView> {
                           : ListView.separated(
                               itemCount: filtered.length,
                               separatorBuilder: (_, __) =>
-                                  const Divider(height: 1),
+                                  Divider(height: 1.h),
                               itemBuilder: (context, index) {
                                 final prod = filtered[index];
                                 return ListTile(
                                   title: Text(
                                     prod.nameAr,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontFamily: 'Cairo',
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
                                   subtitle: Text(
                                     'الكود: ${prod.internalCode ?? "-"} | الرصيد: ${prod.currentQuantity} | السعر: ${prod.retailPrice.toStringAsFixed(2)} ج.م',
-                                    style: const TextStyle(
-                                        fontFamily: 'Cairo', fontSize: 12),
+                                    style: TextStyle(
+                                        fontFamily: 'Cairo', fontSize: 12.sp),
                                   ),
                                   trailing: ElevatedButton.icon(
                                     onPressed: () {
@@ -335,21 +346,21 @@ class _PosViewState extends ConsumerState<PosView> {
                                       Navigator.pop(dialogContext);
                                     },
                                     icon:
-                                        const Icon(LucideIcons.plus, size: 14),
-                                    label: const Text(
+                                        Icon(LucideIcons.plus, size: 14),
+                                    label: Text(
                                       'إضافة',
                                       style: TextStyle(
                                         fontFamily: 'Cairo',
-                                        fontSize: 12,
+                                        fontSize: 12.sp,
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: AppColors.primary,
                                       foregroundColor: Colors.white,
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 12,
-                                        vertical: 8,
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: 12.w,
+                                        vertical: 8.h,
                                       ),
                                     ),
                                   ),
@@ -367,7 +378,7 @@ class _PosViewState extends ConsumerState<PosView> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(dialogContext),
-                  child: const Text('إغلاق',
+                  child: Text('إغلاق',
                       style: TextStyle(fontFamily: 'Cairo')),
                 ),
               ],
@@ -392,79 +403,79 @@ class _PosViewState extends ConsumerState<PosView> {
               return Directionality(
                 textDirection: TextDirection.rtl,
                 child: AlertDialog(
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
                   title: Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(8),
+                        padding: EdgeInsets.all(8.w),
                         decoration: BoxDecoration(
                           color: AppColors.primarySurface,
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(8.r),
                         ),
-                        child: const Icon(LucideIcons.scanLine, color: AppColors.primary),
+                        child: Icon(LucideIcons.scanLine, color: AppColors.primary),
                       ),
-                      const SizedBox(width: 10),
-                      const Text(
+                      SizedBox(width: 10.w),
+                      Text(
                         'ماسح الباركود والـ QR Code',
                         style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold),
                       ),
                       const Spacer(),
                       IconButton(
-                        icon: const Icon(LucideIcons.x),
+                        icon: Icon(LucideIcons.x),
                         onPressed: () => Navigator.pop(dialogContext),
                       ),
                     ],
                   ),
                   content: SizedBox(
-                    width: 500,
+                    width: 500.w,
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         // Simulated Camera View Box
                         Container(
-                          height: 160,
+                          height: 160.h,
                           width: double.infinity,
                           decoration: BoxDecoration(
                             color: Colors.black87,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: AppColors.primary, width: 2),
+                            borderRadius: BorderRadius.circular(12.r),
+                            border: Border.all(color: AppColors.primary, width: 2.w),
                           ),
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const Icon(
+                              Icon(
                                 LucideIcons.qrCode,
                                 size: 64,
                                 color: AppColors.primary,
                               ),
-                              const SizedBox(height: 10),
+                              SizedBox(height: 10.h),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
                                 decoration: BoxDecoration(
                                   color: Colors.white24,
-                                  borderRadius: BorderRadius.circular(20),
+                                  borderRadius: BorderRadius.circular(20.r),
                                 ),
-                                child: const Text(
+                                child: Text(
                                   'جهاز المسح الضوئي يعمل تلقائياً عند قراءة الباركود',
                                   style: TextStyle(
                                     color: Colors.white,
                                     fontFamily: 'Cairo',
-                                    fontSize: 12,
+                                    fontSize: 12.sp,
                                   ),
                                 ),
                               ),
                             ],
                           ),
                         ),
-                        const SizedBox(height: 16),
+                        SizedBox(height: 16.h),
                         TextField(
                           controller: searchController,
                           autofocus: true,
                           decoration: InputDecoration(
                             hintText: 'مسح الباركود أو إدخال كود المنتج...',
-                            prefixIcon: const Icon(LucideIcons.qrCode, color: AppColors.primary),
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                            prefixIcon: Icon(LucideIcons.qrCode, color: AppColors.primary),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10.r)),
+                            contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
                           ),
                           onChanged: (val) => setDialogState(() {}),
                           onSubmitted: (val) async {
@@ -474,21 +485,21 @@ class _PosViewState extends ConsumerState<PosView> {
                             }
                           },
                         ),
-                        const SizedBox(height: 16),
-                        const Align(
+                        SizedBox(height: 16.h),
+                        Align(
                           alignment: Alignment.centerRight,
                           child: Text(
                             'أو اختر من القائمة السريعة:',
                             style: TextStyle(
                               fontFamily: 'Cairo',
                               fontWeight: FontWeight.bold,
-                              fontSize: 13,
+                              fontSize: 13.sp,
                             ),
                           ),
                         ),
-                        const SizedBox(height: 8),
+                        SizedBox(height: 8.h),
                         SizedBox(
-                          height: 180,
+                          height: 180.h,
                           child: productsAsync.when(
                             data: (products) {
                               final filtered = products.where((p) {
@@ -499,7 +510,7 @@ class _PosViewState extends ConsumerState<PosView> {
                               }).toList();
 
                               if (filtered.isEmpty) {
-                                return const Center(
+                                return Center(
                                   child: Text(
                                     'لا توجد منتجات',
                                     style: TextStyle(fontFamily: 'Cairo'),
@@ -509,38 +520,38 @@ class _PosViewState extends ConsumerState<PosView> {
 
                               return ListView.separated(
                                 itemCount: filtered.length,
-                                separatorBuilder: (_, __) => const Divider(height: 1),
+                                separatorBuilder: (_, __) => Divider(height: 1.h),
                                 itemBuilder: (context, index) {
                                   final p = filtered[index];
                                   return ListTile(
                                     dense: true,
                                     title: Text(
                                       p.nameAr,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontFamily: 'Cairo',
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
                                     subtitle: Text(
                                       'الرصيد: ${p.currentQuantity}',
-                                      style: const TextStyle(fontFamily: 'Cairo', fontSize: 11),
+                                      style: TextStyle(fontFamily: 'Cairo', fontSize: 11.sp),
                                     ),
                                     trailing: ElevatedButton.icon(
                                       onPressed: () {
                                         _addToCart(p);
                                         Navigator.pop(dialogContext);
                                       },
-                                      icon: const Icon(LucideIcons.plus, size: 14),
-                                      label: const Text(
+                                      icon: Icon(LucideIcons.plus, size: 14),
+                                      label: Text(
                                         'إضافة',
-                                        style: TextStyle(fontFamily: 'Cairo', fontSize: 12),
+                                        style: TextStyle(fontFamily: 'Cairo', fontSize: 12.sp),
                                       ),
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor: AppColors.primary,
                                         foregroundColor: Colors.white,
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 10,
-                                          vertical: 6,
+                                        padding: EdgeInsets.symmetric(
+                                          horizontal: 10.w,
+                                          vertical: 6.h,
                                         ),
                                       ),
                                     ),
@@ -548,8 +559,8 @@ class _PosViewState extends ConsumerState<PosView> {
                                 },
                               );
                             },
-                            loading: () => const Center(child: CircularProgressIndicator()),
-                            error: (_, __) => const SizedBox(),
+                            loading: () => Center(child: CircularProgressIndicator()),
+                            error: (_, __) => SizedBox(),
                           ),
                         ),
                       ],
@@ -578,31 +589,31 @@ class _PosViewState extends ConsumerState<PosView> {
           return Directionality(
             textDirection: TextDirection.rtl,
             child: AlertDialog(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
               title: Row(
                 children: [
-                  const Icon(LucideIcons.userCheck, color: AppColors.primary),
-                  const SizedBox(width: 8),
-                  const Text(
+                  Icon(LucideIcons.userCheck, color: AppColors.primary),
+                  SizedBox(width: 8.w),
+                  Text(
                     'تحديد العميل',
                     style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold),
                   ),
                   const Spacer(),
                   IconButton(
-                    icon: const Icon(LucideIcons.x),
+                    icon: Icon(LucideIcons.x),
                     onPressed: () => Navigator.pop(context),
                   ),
                 ],
               ),
               content: SizedBox(
-                width: 480,
-                height: 420,
+                width: 480.w,
+                height: 420.h,
                 child: Column(
                   children: [
                     // Cash customer option button
                     ListTile(
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(10.r),
                         side: BorderSide(
                           color: _selectedCustomer == null
                               ? AppColors.primary
@@ -613,23 +624,23 @@ class _PosViewState extends ConsumerState<PosView> {
                       tileColor: _selectedCustomer == null
                           ? AppColors.primarySurface
                           : Colors.grey.shade50,
-                      leading: const CircleAvatar(
+                      leading: CircleAvatar(
                         backgroundColor: AppColors.primary,
                         child: Icon(LucideIcons.user, color: Colors.white, size: 18),
                       ),
-                      title: const Text(
+                      title: Text(
                         'عميل نقدي (افتراضي)',
                         style: TextStyle(
                           fontFamily: 'Cairo',
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      subtitle: const Text(
+                      subtitle: Text(
                         'للمبيعات النقدية المباشرة بدون تسجيل بيانات العميل',
-                        style: TextStyle(fontFamily: 'Cairo', fontSize: 11),
+                        style: TextStyle(fontFamily: 'Cairo', fontSize: 11.sp),
                       ),
                       trailing: _selectedCustomer == null
-                          ? const Icon(LucideIcons.checkCircle2, color: AppColors.primary)
+                          ? Icon(LucideIcons.checkCircle2, color: AppColors.primary)
                           : null,
                       onTap: () {
                         setState(() {
@@ -638,18 +649,18 @@ class _PosViewState extends ConsumerState<PosView> {
                         Navigator.pop(context);
                       },
                     ),
-                    const SizedBox(height: 12),
+                    SizedBox(height: 12.h),
                     TextField(
                       controller: searchController,
                       decoration: InputDecoration(
                         hintText: 'ابحث باسم العميل أو رقم الهاتف...',
-                        prefixIcon: const Icon(LucideIcons.search, size: 18),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        prefixIcon: Icon(LucideIcons.search, size: 18),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10.r)),
+                        contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
                       ),
                       onChanged: (val) => setDialogState(() {}),
                     ),
-                    const SizedBox(height: 10),
+                    SizedBox(height: 10.h),
                     Expanded(
                       child: customersAsync.when(
                         data: (customers) {
@@ -661,7 +672,7 @@ class _PosViewState extends ConsumerState<PosView> {
                           }).toList();
 
                           if (filtered.isEmpty) {
-                            return const Center(
+                            return Center(
                               child: Text(
                                 'لا يوجد عملاء مطبقون',
                                 style: TextStyle(fontFamily: 'Cairo'),
@@ -671,7 +682,7 @@ class _PosViewState extends ConsumerState<PosView> {
 
                           return ListView.separated(
                             itemCount: filtered.length,
-                            separatorBuilder: (_, __) => const Divider(height: 1),
+                            separatorBuilder: (_, __) => Divider(height: 1.h),
                             itemBuilder: (context, index) {
                               final cust = filtered[index];
                               final isSelected = _selectedCustomer?.id == cust.id;
@@ -680,21 +691,21 @@ class _PosViewState extends ConsumerState<PosView> {
                                 selected: isSelected,
                                 selectedTileColor: AppColors.primarySurface,
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
+                                  borderRadius: BorderRadius.circular(8.r),
                                 ),
                                 title: Text(
                                   cust.name,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontFamily: 'Cairo',
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
                                 subtitle: Text(
                                   'الهاتف: ${cust.phone ?? "غير مسجل"} | الرصيد: ${cust.balance.toStringAsFixed(2)} ج.م',
-                                  style: const TextStyle(fontFamily: 'Cairo', fontSize: 11),
+                                  style: TextStyle(fontFamily: 'Cairo', fontSize: 11.sp),
                                 ),
                                 trailing: isSelected
-                                    ? const Icon(LucideIcons.check, color: AppColors.primary)
+                                    ? Icon(LucideIcons.check, color: AppColors.primary)
                                     : null,
                                 onTap: () {
                                   setState(() {
@@ -706,8 +717,8 @@ class _PosViewState extends ConsumerState<PosView> {
                             },
                           );
                         },
-                        loading: () => const Center(child: CircularProgressIndicator()),
-                        error: (_, __) => const SizedBox(),
+                        loading: () => Center(child: CircularProgressIndicator()),
+                        error: (_, __) => SizedBox(),
                       ),
                     ),
                   ],
@@ -719,8 +730,8 @@ class _PosViewState extends ConsumerState<PosView> {
                     Navigator.pop(context);
                     _showAddQuickCustomerDialog();
                   },
-                  icon: const Icon(LucideIcons.userPlus, size: 16),
-                  label: const Text(
+                  icon: Icon(LucideIcons.userPlus, size: 16),
+                  label: Text(
                     'إضافة عميل جديد',
                     style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold),
                   ),
@@ -745,11 +756,11 @@ class _PosViewState extends ConsumerState<PosView> {
       builder: (context) => Directionality(
         textDirection: TextDirection.rtl,
         child: AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Row(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
+          title: Row(
             children: [
               Icon(LucideIcons.userPlus, color: AppColors.primary),
-              SizedBox(width: 8),
+              SizedBox(width: 8.w),
               Text(
                 'إضافة عميل جديد سريح',
                 style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold),
@@ -763,16 +774,16 @@ class _PosViewState extends ConsumerState<PosView> {
               children: [
                 TextFormField(
                   controller: nameCtrl,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: 'اسم العميل *',
                     border: OutlineInputBorder(),
                   ),
                   validator: (v) => v == null || v.trim().isEmpty ? 'برجاء إدخال الاسم' : null,
                 ),
-                const SizedBox(height: 12),
+                SizedBox(height: 12.h),
                 TextFormField(
                   controller: phoneCtrl,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: 'رقم الهاتف',
                     border: OutlineInputBorder(),
                   ),
@@ -783,7 +794,7 @@ class _PosViewState extends ConsumerState<PosView> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('إلغاء', style: TextStyle(fontFamily: 'Cairo')),
+              child: Text('إلغاء', style: TextStyle(fontFamily: 'Cairo')),
             ),
             ElevatedButton(
               onPressed: () async {
@@ -805,7 +816,7 @@ class _PosViewState extends ConsumerState<PosView> {
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
               ),
-              child: const Text('حفظ واختيار', style: TextStyle(fontFamily: 'Cairo')),
+              child: Text('حفظ واختيار', style: TextStyle(fontFamily: 'Cairo')),
             ),
           ],
         ),
@@ -821,11 +832,11 @@ class _PosViewState extends ConsumerState<PosView> {
       builder: (context) => Directionality(
         textDirection: TextDirection.rtl,
         child: AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Row(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
+          title: Row(
             children: [
               Icon(LucideIcons.percent, color: AppColors.primary),
-              SizedBox(width: 8),
+              SizedBox(width: 8.w),
               Text(
                 'إضافة خصم على الفاتورة',
                 style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold),
@@ -838,7 +849,7 @@ class _PosViewState extends ConsumerState<PosView> {
               TextFormField(
                 controller: discountCtrl,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'قيمة الخصم (ج.م)',
                   border: OutlineInputBorder(),
                 ),
@@ -848,7 +859,7 @@ class _PosViewState extends ConsumerState<PosView> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('إلغاء', style: TextStyle(fontFamily: 'Cairo')),
+              child: Text('إلغاء', style: TextStyle(fontFamily: 'Cairo')),
             ),
             ElevatedButton(
               onPressed: () {
@@ -862,7 +873,7 @@ class _PosViewState extends ConsumerState<PosView> {
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
               ),
-              child: const Text('تطبيق الخصم', style: TextStyle(fontFamily: 'Cairo')),
+              child: Text('تطبيق الخصم', style: TextStyle(fontFamily: 'Cairo')),
             ),
           ],
         ),
@@ -925,27 +936,27 @@ class _PosViewState extends ConsumerState<PosView> {
       builder: (context) => Directionality(
         textDirection: TextDirection.rtl,
         child: AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
           title: Row(
             children: [
-              const Icon(LucideIcons.pauseCircle, color: AppColors.primary),
-              const SizedBox(width: 8),
+              Icon(LucideIcons.pauseCircle, color: AppColors.primary),
+              SizedBox(width: 8.w),
               Text(
                 'الفواتير المعلقة (${suspendedList.length})',
-                style: const TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold),
+                style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold),
               ),
               const Spacer(),
               IconButton(
-                icon: const Icon(LucideIcons.x),
+                icon: Icon(LucideIcons.x),
                 onPressed: () => Navigator.pop(context),
               ),
             ],
           ),
           content: SizedBox(
-            width: 500,
-            height: 380,
+            width: 500.w,
+            height: 380.h,
             child: suspendedList.isEmpty
-                ? const Center(
+                ? Center(
                     child: Text(
                       'لا توجد فواتير معلقة حالياً',
                       style: TextStyle(fontFamily: 'Cairo', color: AppColors.textTertiary),
@@ -953,7 +964,7 @@ class _PosViewState extends ConsumerState<PosView> {
                   )
                 : ListView.separated(
                     itemCount: suspendedList.length,
-                    separatorBuilder: (_, __) => const Divider(height: 1),
+                    separatorBuilder: (_, __) => Divider(height: 1.h),
                     itemBuilder: (context, index) {
                       final item = suspendedList[index];
                       final dt = item.createdAt;
@@ -970,14 +981,14 @@ class _PosViewState extends ConsumerState<PosView> {
                       return ListTile(
                         title: Text(
                           'عميل: ${item.customerName ?? "عميل نقدي"}',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontFamily: 'Cairo',
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                         subtitle: Text(
                           'عدد الأصناف: ${itemsList.length} | التاريخ: $formattedDate',
-                          style: const TextStyle(fontFamily: 'Cairo', fontSize: 12),
+                          style: TextStyle(fontFamily: 'Cairo', fontSize: 12.sp),
                         ),
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
@@ -987,19 +998,19 @@ class _PosViewState extends ConsumerState<PosView> {
                                 Navigator.pop(context);
                                 await _restoreSuspendedInvoice(item);
                               },
-                              icon: const Icon(LucideIcons.play, size: 14),
-                              label: const Text(
+                              icon: Icon(LucideIcons.play, size: 14),
+                              label: Text(
                                 'استرجاع',
-                                style: TextStyle(fontFamily: 'Cairo', fontSize: 12),
+                                style: TextStyle(fontFamily: 'Cairo', fontSize: 12.sp),
                               ),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppColors.primary,
                                 foregroundColor: Colors.white,
                               ),
                             ),
-                            const SizedBox(width: 6),
+                            SizedBox(width: 6.w),
                             IconButton(
-                              icon: const Icon(LucideIcons.trash2, color: AppColors.error, size: 18),
+                              icon: Icon(LucideIcons.trash2, color: AppColors.error, size: 18),
                               onPressed: () async {
                                 await DbHelpers.deleteSuspendedInvoice(db, item.id);
                                 await _loadSuspendedCount();
@@ -1079,10 +1090,140 @@ class _PosViewState extends ConsumerState<PosView> {
       return;
     }
 
+    if (_paymentMethod == 'cash') {
+      _showCheckoutDialog();
+    } else {
+      await _processInvoice(0.0);
+    }
+  }
+
+  void _showCheckoutDialog() {
+    final paidCtrl = TextEditingController(text: _total.toStringAsFixed(2));
+    double paidAmount = _total;
+    
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          final change = paidAmount - _total;
+          
+          return Directionality(
+            textDirection: TextDirection.rtl,
+            child: AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
+              title: Row(
+                children: [
+                  Icon(LucideIcons.banknote, color: AppColors.primary),
+                  SizedBox(width: 8.w),
+                  Text(
+                    'الدفع النقدي',
+                    style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+              content: SizedBox(
+                width: 400.w,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: EdgeInsets.all(16.w),
+                      decoration: BoxDecoration(
+                        color: AppColors.primarySurface,
+                        borderRadius: BorderRadius.circular(12.r),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text('المطلوب:', style: TextStyle(fontFamily: 'Cairo', fontSize: 18.sp)),
+                          Text(
+                            '${_total.toStringAsFixed(2)} ج.م',
+                            style: TextStyle(fontFamily: 'Cairo', fontSize: 22.sp, fontWeight: FontWeight.bold, color: AppColors.primary),
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: 24.h),
+                    TextField(
+                      controller: paidCtrl,
+                      keyboardType: TextInputType.number,
+                      autofocus: true,
+                      style: TextStyle(fontSize: 24.sp, fontWeight: FontWeight.bold),
+                      textAlign: TextAlign.center,
+                      decoration: InputDecoration(
+                        labelText: 'المدفوع من العميل',
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12.r)),
+                        prefixIcon: Icon(LucideIcons.wallet),
+                      ),
+                      onChanged: (val) {
+                        setDialogState(() {
+                          paidAmount = double.tryParse(val) ?? 0.0;
+                        });
+                      },
+                      onSubmitted: (_) {
+                        if (paidAmount >= _total) {
+                          Navigator.pop(context);
+                          _processInvoice(paidAmount);
+                        }
+                      },
+                    ),
+                    SizedBox(height: 24.h),
+                    Container(
+                      padding: EdgeInsets.all(16.w),
+                      decoration: BoxDecoration(
+                        color: change >= 0 ? AppColors.success.withOpacity(0.1) : AppColors.error.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12.r),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text('الباقي للعميل:', style: TextStyle(fontFamily: 'Cairo', fontSize: 18.sp)),
+                          Text(
+                            '${change >= 0 ? change.toStringAsFixed(2) : 0.00} ج.م',
+                            style: TextStyle(
+                              fontFamily: 'Cairo', 
+                              fontSize: 24.sp, 
+                              fontWeight: FontWeight.bold, 
+                              color: change >= 0 ? AppColors.success : AppColors.error,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text('إلغاء (Esc)', style: TextStyle(fontFamily: 'Cairo')),
+                ),
+                ElevatedButton.icon(
+                  onPressed: change >= 0 ? () {
+                    Navigator.pop(context);
+                    _processInvoice(paidAmount);
+                  } : null,
+                  icon: Icon(LucideIcons.check),
+                  label: Text('تأكيد الدفع (Enter)', style: TextStyle(fontFamily: 'Cairo')),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Future<void> _processInvoice(double paidAmount) async {
     final db = ref.read(databaseProvider);
     final userId = ref.read(currentUserIdProvider) ?? 1;
 
-    final paid = _paymentMethod == 'cash' ? _total : 0.0;
+    final actualPaid = _paymentMethod == 'cash' ? _total : 0.0;
 
     try {
       final invoiceId = await DbHelpers.saveSalesInvoice(
@@ -1091,7 +1232,7 @@ class _PosViewState extends ConsumerState<PosView> {
         subtotal: _subtotal,
         discount: _overallDiscount,
         total: _total,
-        paid: paid,
+        paid: actualPaid,
         paymentMethod: _paymentMethod,
         customerId: _selectedCustomer?.id,
         userId: userId,
@@ -1121,53 +1262,53 @@ class _PosViewState extends ConsumerState<PosView> {
       builder: (context) => Directionality(
         textDirection: TextDirection.rtl,
         child: AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
           content: SizedBox(
-            width: 420,
+            width: 420.w,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(LucideIcons.checkCircle2, color: AppColors.success, size: 54),
-                const SizedBox(height: 10),
-                const Text(
+                Icon(LucideIcons.checkCircle2, color: AppColors.success, size: 54),
+                SizedBox(height: 10.h),
+                Text(
                   'تم حفظ الفاتورة بنجاح',
                   style: TextStyle(
                     fontFamily: 'Cairo',
-                    fontSize: 20,
+                    fontSize: 20.sp,
                     fontWeight: FontWeight.bold,
                     color: AppColors.success,
                   ),
                 ),
-                const SizedBox(height: 4),
+                SizedBox(height: 4.h),
                 Text(
                   'رقم الفاتورة: ${inv.invoiceNumber}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'Cairo',
-                    fontSize: 14,
+                    fontSize: 14.sp,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                const Divider(height: 24),
+                Divider(height: 24.h),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
                       'العميل: ${cust?.name ?? "عميل نقدي"}',
-                      style: const TextStyle(fontFamily: 'Cairo', fontSize: 13),
+                      style: TextStyle(fontFamily: 'Cairo', fontSize: 13.sp),
                     ),
                     Text(
                       'طريقة الدفع: ${inv.paymentMethod == "cash" ? "نقدي" : "آجل"}',
-                      style: const TextStyle(fontFamily: 'Cairo', fontSize: 13),
+                      style: TextStyle(fontFamily: 'Cairo', fontSize: 13.sp),
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                SizedBox(height: 12.h),
                 Container(
                   constraints: const BoxConstraints(maxHeight: 180),
-                  padding: const EdgeInsets.all(8),
+                  padding: EdgeInsets.all(8.w),
                   decoration: BoxDecoration(
                     color: AppColors.surfaceVariant,
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(8.r),
                   ),
                   child: ListView.builder(
                     shrinkWrap: true,
@@ -1175,22 +1316,22 @@ class _PosViewState extends ConsumerState<PosView> {
                     itemBuilder: (context, idx) {
                       final it = items[idx];
                       return Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        padding: EdgeInsets.symmetric(vertical: 4.h),
                         child: Row(
                           children: [
                             Expanded(
                               child: Text(
                                 it.product.nameAr,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontFamily: 'Cairo',
-                                  fontSize: 12,
+                                  fontSize: 12.sp,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
                             ),
                             Text(
                               '${it.quantity} x ${it.unitPrice} = ${it.total.toStringAsFixed(2)} ج.م',
-                              style: const TextStyle(fontFamily: 'Cairo', fontSize: 12),
+                              style: TextStyle(fontFamily: 'Cairo', fontSize: 12.sp),
                             ),
                           ],
                         ),
@@ -1198,20 +1339,20 @@ class _PosViewState extends ConsumerState<PosView> {
                     },
                   ),
                 ),
-                const SizedBox(height: 12),
+                SizedBox(height: 12.h),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
+                    Text(
                       'إجمالي الفاتورة:',
                       style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold),
                     ),
                     Text(
                       '${inv.total.toStringAsFixed(2)} ج.م',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'Cairo',
                         fontWeight: FontWeight.bold,
-                        fontSize: 16,
+                        fontSize: 16.sp,
                         color: AppColors.primary,
                       ),
                     ),
@@ -1229,8 +1370,8 @@ class _PosViewState extends ConsumerState<PosView> {
                   ),
                 );
               },
-              icon: const Icon(LucideIcons.printer, size: 16),
-              label: const Text('طباعة الإيصال (F3)', style: TextStyle(fontFamily: 'Cairo')),
+              icon: Icon(LucideIcons.printer, size: 16),
+              label: Text('طباعة الإيصال (F3)', style: TextStyle(fontFamily: 'Cairo')),
             ),
             ElevatedButton(
               onPressed: () => Navigator.pop(context),
@@ -1238,7 +1379,7 @@ class _PosViewState extends ConsumerState<PosView> {
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
               ),
-              child: const Text('فاتورة جديدة (F1)', style: TextStyle(fontFamily: 'Cairo')),
+              child: Text('فاتورة جديدة (F1)', style: TextStyle(fontFamily: 'Cairo')),
             ),
           ],
         ),
@@ -1271,29 +1412,29 @@ class _PosViewState extends ConsumerState<PosView> {
                     children: [
                       // Top bar
                       Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 16.w,
+                          vertical: 8.h,
                         ),
-                        decoration: const BoxDecoration(
+                        decoration: BoxDecoration(
                           color: AppColors.primary,
                         ),
                         child: Row(
                           children: [
                             IconButton(
                               onPressed: () => context.pop(),
-                              icon: const Icon(
+                              icon: Icon(
                                 LucideIcons.arrowRight,
                                 color: Colors.white,
                               ),
                               tooltip: 'رجوع (Esc)',
                             ),
-                            const SizedBox(width: 8),
-                            const Text(
+                            SizedBox(width: 8.w),
+                            Text(
                               'نقطة البيع',
                               style: TextStyle(
                                 color: Colors.white,
-                                fontSize: 18,
+                                fontSize: 18.sp,
                                 fontWeight: FontWeight.w700,
                                 fontFamily: 'Cairo',
                               ),
@@ -1316,17 +1457,17 @@ class _PosViewState extends ConsumerState<PosView> {
                                 onTap: _showSuspendedInvoicesDialog,
                                 child: Container(
                                   margin: const EdgeInsets.only(left: 6),
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 10, vertical: 4),
+                                  padding: EdgeInsets.symmetric(
+                                      horizontal: 10.w, vertical: 4.h),
                                   decoration: BoxDecoration(
                                     color: AppColors.warning,
-                                    borderRadius: BorderRadius.circular(12),
+                                    borderRadius: BorderRadius.circular(12.r),
                                   ),
                                   child: Text(
                                     'المعلقة ($_suspendedCount)',
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       color: Colors.white,
-                                      fontSize: 11,
+                                      fontSize: 11.sp,
                                       fontWeight: FontWeight.bold,
                                       fontFamily: 'Cairo',
                                     ),
@@ -1339,32 +1480,32 @@ class _PosViewState extends ConsumerState<PosView> {
 
                       // Barcode & Search Input Bar
                       Container(
-                        padding: const EdgeInsets.all(12),
+                        padding: EdgeInsets.all(12.w),
                         color: Colors.white,
                         child: Row(
                           children: [
                             InkWell(
                               onTap: _showQrScannerDialog,
                               child: Container(
-                                padding: const EdgeInsets.all(10),
+                                padding: EdgeInsets.all(10.w),
                                 decoration: BoxDecoration(
                                   color: AppColors.primarySurface,
-                                  borderRadius: BorderRadius.circular(8),
+                                  borderRadius: BorderRadius.circular(8.r),
                                   border: Border.all(color: AppColors.primary),
                                 ),
-                                child: const Row(
+                                child: Row(
                                   children: [
                                     Icon(
                                       LucideIcons.qrCode,
                                       color: AppColors.primary,
                                       size: 20,
                                     ),
-                                    SizedBox(width: 6),
+                                    SizedBox(width: 6.w),
                                     Text(
                                       'مسح QR',
                                       style: TextStyle(
                                         fontFamily: 'Cairo',
-                                        fontSize: 12,
+                                        fontSize: 12.sp,
                                         fontWeight: FontWeight.bold,
                                         color: AppColors.primary,
                                       ),
@@ -1373,7 +1514,7 @@ class _PosViewState extends ConsumerState<PosView> {
                                 ),
                               ),
                             ),
-                            const SizedBox(width: 12),
+                            SizedBox(width: 12.w),
                             Expanded(
                               child: TextField(
                                 controller: _barcodeController,
@@ -1382,33 +1523,33 @@ class _PosViewState extends ConsumerState<PosView> {
                                 decoration: InputDecoration(
                                   hintText:
                                       'امسح الباركود أو اكتب اسم أو كود المنتج...',
-                                  prefixIcon: const Icon(LucideIcons.search,
+                                  prefixIcon: Icon(LucideIcons.search,
                                       color: AppColors.textSecondary),
                                   border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(8),
+                                    borderRadius: BorderRadius.circular(8.r),
                                   ),
-                                  contentPadding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                    vertical: 10,
+                                  contentPadding: EdgeInsets.symmetric(
+                                    horizontal: 12.w,
+                                    vertical: 10.h,
                                   ),
                                 ),
                                 onSubmitted: (value) => _searchAndAddProduct(value),
                               ),
                             ),
-                            const SizedBox(width: 8),
+                            SizedBox(width: 8.w),
                             ElevatedButton.icon(
                               onPressed: () =>
                                   _searchAndAddProduct(_barcodeController.text),
-                              icon: const Icon(LucideIcons.plus, size: 18),
-                              label: const Text(
+                              icon: Icon(LucideIcons.plus, size: 18),
+                              label: Text(
                                 'إضافة',
                                 style: TextStyle(fontFamily: 'Cairo'),
                               ),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppColors.primary,
                                 foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 16, vertical: 14),
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: 16.w, vertical: 14.h),
                               ),
                             ),
                           ],
@@ -1423,20 +1564,20 @@ class _PosViewState extends ConsumerState<PosView> {
                             children: [
                               // Table header
                               Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 10,
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 16.w,
+                                  vertical: 10.h,
                                 ),
                                 color: AppColors.surfaceVariant,
-                                child: const Row(
+                                child: Row(
                                   children: [
                                     SizedBox(
-                                      width: 40,
+                                      width: 40.w,
                                       child: Text(
                                         '#',
                                         style: TextStyle(
                                           fontWeight: FontWeight.w600,
-                                          fontSize: 13,
+                                          fontSize: 13.sp,
                                           fontFamily: 'Cairo',
                                         ),
                                       ),
@@ -1447,64 +1588,64 @@ class _PosViewState extends ConsumerState<PosView> {
                                         'المنتج',
                                         style: TextStyle(
                                           fontWeight: FontWeight.w600,
-                                          fontSize: 13,
+                                          fontSize: 13.sp,
                                           fontFamily: 'Cairo',
                                         ),
                                       ),
                                     ),
                                     SizedBox(
-                                      width: 120,
+                                      width: 120.w,
                                       child: Text(
                                         'الكمية',
                                         textAlign: TextAlign.center,
                                         style: TextStyle(
                                           fontWeight: FontWeight.w600,
-                                          fontSize: 13,
+                                          fontSize: 13.sp,
                                           fontFamily: 'Cairo',
                                         ),
                                       ),
                                     ),
                                     SizedBox(
-                                      width: 90,
+                                      width: 90.w,
                                       child: Text(
                                         'السعر',
                                         textAlign: TextAlign.center,
                                         style: TextStyle(
                                           fontWeight: FontWeight.w600,
-                                          fontSize: 13,
+                                          fontSize: 13.sp,
                                           fontFamily: 'Cairo',
                                         ),
                                       ),
                                     ),
                                     SizedBox(
-                                      width: 80,
+                                      width: 80.w,
                                       child: Text(
                                         'الخصم',
                                         textAlign: TextAlign.center,
                                         style: TextStyle(
                                           fontWeight: FontWeight.w600,
-                                          fontSize: 13,
+                                          fontSize: 13.sp,
                                           fontFamily: 'Cairo',
                                         ),
                                       ),
                                     ),
                                     SizedBox(
-                                      width: 100,
+                                      width: 100.w,
                                       child: Text(
                                         'الإجمالي',
                                         textAlign: TextAlign.center,
                                         style: TextStyle(
                                           fontWeight: FontWeight.w600,
-                                          fontSize: 13,
+                                          fontSize: 13.sp,
                                           fontFamily: 'Cairo',
                                         ),
                                       ),
                                     ),
-                                    SizedBox(width: 40),
+                                    SizedBox(width: 40.w),
                                   ],
                                 ),
                               ),
-                              const Divider(height: 1),
+                              Divider(height: 1.h),
 
                               // Items List or Empty State
                               Expanded(
@@ -1512,7 +1653,7 @@ class _PosViewState extends ConsumerState<PosView> {
                                     ? Center(
                                         child: InkWell(
                                           onTap: _showQrScannerDialog,
-                                          child: const Column(
+                                          child: Column(
                                             mainAxisSize: MainAxisSize.min,
                                             children: [
                                               Icon(
@@ -1520,12 +1661,12 @@ class _PosViewState extends ConsumerState<PosView> {
                                                 size: 54,
                                                 color: AppColors.textTertiary,
                                               ),
-                                              SizedBox(height: 12),
+                                              SizedBox(height: 12.h),
                                               Text(
                                                 'امسح الباركود أو الكيو ار لإضافة منتجات',
                                                 style: TextStyle(
                                                   color: AppColors.textTertiary,
-                                                  fontSize: 16,
+                                                  fontSize: 16.sp,
                                                   fontFamily: 'Cairo',
                                                 ),
                                               ),
@@ -1536,7 +1677,7 @@ class _PosViewState extends ConsumerState<PosView> {
                                     : ListView.separated(
                                         itemCount: _cartItems.length,
                                         separatorBuilder: (_, __) =>
-                                            const Divider(height: 1),
+                                            Divider(height: 1.h),
                                         itemBuilder: (context, index) {
                                           final item = _cartItems[index];
                                           return _buildCartRow(index, item);
@@ -1553,15 +1694,15 @@ class _PosViewState extends ConsumerState<PosView> {
 
                 // ─── Right: Payment Panel ──────────
                 SizedBox(
-                  width: 330,
+                  width: 330.w,
                   child: Container(
                     color: Colors.white,
                     child: Column(
                       children: [
                         // Customer Header Selector
                         Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: const BoxDecoration(
+                          padding: EdgeInsets.all(16.w),
+                          decoration: BoxDecoration(
                             border: Border(
                               bottom: BorderSide(color: AppColors.border),
                             ),
@@ -1575,26 +1716,26 @@ class _PosViewState extends ConsumerState<PosView> {
                                     ? AppColors.primary
                                     : AppColors.textSecondary,
                               ),
-                              const SizedBox(width: 8),
+                              SizedBox(width: 8.w),
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
                                       _selectedCustomer?.name ?? 'عميل نقدي',
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontFamily: 'Cairo',
                                         fontWeight: FontWeight.bold,
-                                        fontSize: 14,
+                                        fontSize: 14.sp,
                                       ),
                                       overflow: TextOverflow.ellipsis,
                                     ),
                                     if (_selectedCustomer != null)
                                       Text(
                                         'الرصيد: ${_selectedCustomer!.balance.toStringAsFixed(2)} ج.م',
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontFamily: 'Cairo',
-                                          fontSize: 11,
+                                          fontSize: 11.sp,
                                           color: AppColors.textSecondary,
                                         ),
                                       ),
@@ -1603,7 +1744,7 @@ class _PosViewState extends ConsumerState<PosView> {
                               ),
                               TextButton(
                                 onPressed: _showCustomerSelectionDialog,
-                                child: const Text(
+                                child: Text(
                                   'تغيير',
                                   style: TextStyle(
                                     fontFamily: 'Cairo',
@@ -1619,8 +1760,8 @@ class _PosViewState extends ConsumerState<PosView> {
 
                         // Totals Summary Calculation
                         Container(
-                          padding: const EdgeInsets.all(20),
-                          decoration: const BoxDecoration(
+                          padding: EdgeInsets.all(20.w),
+                          decoration: BoxDecoration(
                             border: Border(
                               top: BorderSide(color: AppColors.border),
                             ),
@@ -1629,14 +1770,14 @@ class _PosViewState extends ConsumerState<PosView> {
                             children: [
                               _buildTotalRow(
                                   'المجموع', _subtotal.toStringAsFixed(2)),
-                              const SizedBox(height: 8),
+                              SizedBox(height: 8.h),
                               Row(
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
                                 children: [
                                   Row(
                                     children: [
-                                      const Text(
+                                      Text(
                                         'الخصم',
                                         style: TextStyle(
                                           fontFamily: 'Cairo',
@@ -1644,7 +1785,7 @@ class _PosViewState extends ConsumerState<PosView> {
                                         ),
                                       ),
                                       IconButton(
-                                        icon: const Icon(LucideIcons.edit3,
+                                        icon: Icon(LucideIcons.edit3,
                                             size: 14, color: AppColors.primary),
                                         onPressed: _showDiscountDialog,
                                         tooltip: 'إضافة خصم',
@@ -1653,7 +1794,7 @@ class _PosViewState extends ConsumerState<PosView> {
                                   ),
                                   Text(
                                     '${_overallDiscount.toStringAsFixed(2)} ج.م',
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontFamily: 'Cairo',
                                       color: AppColors.textPrimary,
                                       fontWeight: FontWeight.w500,
@@ -1661,14 +1802,14 @@ class _PosViewState extends ConsumerState<PosView> {
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 8),
-                              const Divider(),
-                              const SizedBox(height: 8),
+                              SizedBox(height: 8.h),
+                              Divider(),
+                              SizedBox(height: 8.h),
                               _buildTotalRow(
                                 'الإجمالي',
                                 _total.toStringAsFixed(2),
                                 isBold: true,
-                                fontSize: 24,
+                                fontSize: 24.sp,
                               ),
                             ],
                           ),
@@ -1676,7 +1817,7 @@ class _PosViewState extends ConsumerState<PosView> {
 
                         // Payment method toggle
                         Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          padding: EdgeInsets.symmetric(horizontal: 20.w),
                           child: Row(
                             children: [
                               Expanded(
@@ -1691,7 +1832,7 @@ class _PosViewState extends ConsumerState<PosView> {
                                   },
                                 ),
                               ),
-                              const SizedBox(width: 8),
+                              SizedBox(width: 8.w),
                               Expanded(
                                 child: _buildPaymentButton(
                                   'آجل',
@@ -1700,7 +1841,7 @@ class _PosViewState extends ConsumerState<PosView> {
                                   onTap: () {
                                     if (_selectedCustomer == null) {
                                       ScaffoldMessenger.of(context).showSnackBar(
-                                        const SnackBar(
+                                        SnackBar(
                                           content: Text(
                                             'يرجى تحديد عميل مسجل للبيع الآجل أولاً',
                                             style: TextStyle(fontFamily: 'Cairo'),
@@ -1720,23 +1861,23 @@ class _PosViewState extends ConsumerState<PosView> {
                             ],
                           ),
                         ),
-                        const SizedBox(height: 12),
+                        SizedBox(height: 12.h),
 
                         // Main Action buttons
                         Padding(
-                          padding: const EdgeInsets.all(20),
+                          padding: EdgeInsets.all(20.w),
                           child: Column(
                             children: [
                               SizedBox(
                                 width: double.infinity,
-                                height: 50,
+                                height: 50.h,
                                 child: ElevatedButton.icon(
                                   onPressed: _saveAndPrintInvoice,
-                                  icon: const Icon(LucideIcons.check, size: 20),
-                                  label: const Text(
+                                  icon: Icon(LucideIcons.check, size: 20),
+                                  label: Text(
                                     'حفظ وطباعة (F2)',
                                     style: TextStyle(
-                                      fontSize: 16,
+                                      fontSize: 16.sp,
                                       fontFamily: 'Cairo',
                                       fontWeight: FontWeight.bold,
                                     ),
@@ -1745,28 +1886,28 @@ class _PosViewState extends ConsumerState<PosView> {
                                     backgroundColor: AppColors.success,
                                     foregroundColor: Colors.white,
                                     shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(10),
+                                      borderRadius: BorderRadius.circular(10.r),
                                     ),
                                   ),
                                 ),
                               ),
-                              const SizedBox(height: 8),
+                              SizedBox(height: 8.h),
                               Row(
                                 children: [
                                   Expanded(
                                     child: OutlinedButton.icon(
                                       onPressed: _suspendInvoice,
-                                      icon: const Icon(
+                                      icon: Icon(
                                         LucideIcons.pause,
                                         size: 16,
                                       ),
-                                      label: const Text(
+                                      label: Text(
                                         'تعليق',
                                         style: TextStyle(fontFamily: 'Cairo'),
                                       ),
                                     ),
                                   ),
-                                  const SizedBox(width: 8),
+                                  SizedBox(width: 8.w),
                                   Expanded(
                                     child: OutlinedButton.icon(
                                       onPressed: () {
@@ -1774,8 +1915,8 @@ class _PosViewState extends ConsumerState<PosView> {
                                           _showCancelConfirmDialog();
                                         }
                                       },
-                                      icon: const Icon(LucideIcons.x, size: 16),
-                                      label: const Text(
+                                      icon: Icon(LucideIcons.x, size: 16),
+                                      label: Text(
                                         'إلغاء',
                                         style: TextStyle(fontFamily: 'Cairo'),
                                       ),
@@ -1803,14 +1944,14 @@ class _PosViewState extends ConsumerState<PosView> {
 
   Widget _buildCartRow(int index, PosCartItem item) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
       child: Row(
         children: [
           SizedBox(
-            width: 40,
+            width: 40.w,
             child: Text(
               '${index + 1}',
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'Cairo',
                 fontWeight: FontWeight.bold,
               ),
@@ -1823,17 +1964,17 @@ class _PosViewState extends ConsumerState<PosView> {
               children: [
                 Text(
                   item.product.nameAr,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'Cairo',
                     fontWeight: FontWeight.bold,
-                    fontSize: 14,
+                    fontSize: 14.sp,
                   ),
                 ),
                 Text(
                   'كود: ${item.product.internalCode ?? "-"}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'Cairo',
-                    fontSize: 11,
+                    fontSize: 11.sp,
                     color: AppColors.textSecondary,
                   ),
                 ),
@@ -1843,41 +1984,41 @@ class _PosViewState extends ConsumerState<PosView> {
 
           // Quantity controls (- / +)
           SizedBox(
-            width: 120,
+            width: 120.w,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 InkWell(
                   onTap: () => _updateItemQuantity(index, item.quantity - 1),
                   child: Container(
-                    padding: const EdgeInsets.all(4),
+                    padding: EdgeInsets.all(4.w),
                     decoration: BoxDecoration(
                       color: Colors.grey.shade200,
-                      borderRadius: BorderRadius.circular(4),
+                      borderRadius: BorderRadius.circular(4.r),
                     ),
-                    child: const Icon(LucideIcons.minus, size: 14),
+                    child: Icon(LucideIcons.minus, size: 14),
                   ),
                 ),
                 Expanded(
                   child: Text(
                     item.quantity.toStringAsFixed(item.quantity.truncateToDouble() == item.quantity ? 0 : 2),
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: 'Cairo',
                       fontWeight: FontWeight.bold,
-                      fontSize: 14,
+                      fontSize: 14.sp,
                     ),
                   ),
                 ),
                 InkWell(
                   onTap: () => _updateItemQuantity(index, item.quantity + 1),
                   child: Container(
-                    padding: const EdgeInsets.all(4),
+                    padding: EdgeInsets.all(4.w),
                     decoration: BoxDecoration(
                       color: Colors.grey.shade200,
-                      borderRadius: BorderRadius.circular(4),
+                      borderRadius: BorderRadius.circular(4.r),
                     ),
-                    child: const Icon(LucideIcons.plus, size: 14),
+                    child: Icon(LucideIcons.plus, size: 14),
                   ),
                 ),
               ],
@@ -1886,16 +2027,16 @@ class _PosViewState extends ConsumerState<PosView> {
 
           // Price
           SizedBox(
-            width: 90,
+            width: 90.w,
             child: InkWell(
               onTap: () => _showEditPriceDialog(index, item),
               child: Text(
                 item.unitPrice.toStringAsFixed(2),
                 textAlign: TextAlign.center,
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'Cairo',
                   fontWeight: FontWeight.w600,
-                  fontSize: 13,
+                  fontSize: 13.sp,
                 ),
               ),
             ),
@@ -1903,16 +2044,16 @@ class _PosViewState extends ConsumerState<PosView> {
 
           // Item Discount
           SizedBox(
-            width: 80,
+            width: 80.w,
             child: InkWell(
               onTap: () => _showEditItemDiscountDialog(index, item),
               child: Text(
                 item.discount.toStringAsFixed(2),
                 textAlign: TextAlign.center,
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'Cairo',
                   color: AppColors.textSecondary,
-                  fontSize: 13,
+                  fontSize: 13.sp,
                 ),
               ),
             ),
@@ -1920,14 +2061,14 @@ class _PosViewState extends ConsumerState<PosView> {
 
           // Total
           SizedBox(
-            width: 100,
+            width: 100.w,
             child: Text(
               '${item.total.toStringAsFixed(2)} ج.م',
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'Cairo',
                 fontWeight: FontWeight.bold,
-                fontSize: 13,
+                fontSize: 13.sp,
                 color: AppColors.primary,
               ),
             ),
@@ -1935,9 +2076,9 @@ class _PosViewState extends ConsumerState<PosView> {
 
           // Remove Button
           SizedBox(
-            width: 40,
+            width: 40.w,
             child: IconButton(
-              icon: const Icon(LucideIcons.trash2, color: AppColors.error, size: 18),
+              icon: Icon(LucideIcons.trash2, color: AppColors.error, size: 18),
               onPressed: () => _removeItem(index),
               tooltip: 'حذف من الفاتورة',
             ),
@@ -1955,15 +2096,15 @@ class _PosViewState extends ConsumerState<PosView> {
       builder: (context) => Directionality(
         textDirection: TextDirection.rtl,
         child: AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
           title: Text(
             'تعديل سعر ${item.product.nameAr}',
-            style: const TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold),
+            style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold),
           ),
           content: TextFormField(
             controller: priceCtrl,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               labelText: 'السعر الجديد (ج.م)',
               border: OutlineInputBorder(),
             ),
@@ -1971,7 +2112,7 @@ class _PosViewState extends ConsumerState<PosView> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('إلغاء', style: TextStyle(fontFamily: 'Cairo')),
+              child: Text('إلغاء', style: TextStyle(fontFamily: 'Cairo')),
             ),
             ElevatedButton(
               onPressed: () {
@@ -1983,7 +2124,7 @@ class _PosViewState extends ConsumerState<PosView> {
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
               ),
-              child: const Text('حفظ', style: TextStyle(fontFamily: 'Cairo')),
+              child: Text('حفظ', style: TextStyle(fontFamily: 'Cairo')),
             ),
           ],
         ),
@@ -1999,15 +2140,15 @@ class _PosViewState extends ConsumerState<PosView> {
       builder: (context) => Directionality(
         textDirection: TextDirection.rtl,
         child: AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
           title: Text(
             'خصم الصنف ${item.product.nameAr}',
-            style: const TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold),
+            style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold),
           ),
           content: TextFormField(
             controller: discCtrl,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               labelText: 'خصم الصنف (ج.م)',
               border: OutlineInputBorder(),
             ),
@@ -2015,7 +2156,7 @@ class _PosViewState extends ConsumerState<PosView> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('إلغاء', style: TextStyle(fontFamily: 'Cairo')),
+              child: Text('إلغاء', style: TextStyle(fontFamily: 'Cairo')),
             ),
             ElevatedButton(
               onPressed: () {
@@ -2027,7 +2168,7 @@ class _PosViewState extends ConsumerState<PosView> {
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
               ),
-              child: const Text('حفظ الخصم', style: TextStyle(fontFamily: 'Cairo')),
+              child: Text('حفظ الخصم', style: TextStyle(fontFamily: 'Cairo')),
             ),
           ],
         ),
@@ -2041,19 +2182,19 @@ class _PosViewState extends ConsumerState<PosView> {
       builder: (context) => Directionality(
         textDirection: TextDirection.rtl,
         child: AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Text(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
+          title: Text(
             'إلغاء الفاتورة الحالية',
             style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold),
           ),
-          content: const Text(
+          content: Text(
             'هل أنت أصلح في مسح جميع محتويات الفاتورة الحالية؟',
             style: TextStyle(fontFamily: 'Cairo'),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('تراجع', style: TextStyle(fontFamily: 'Cairo')),
+              child: Text('تراجع', style: TextStyle(fontFamily: 'Cairo')),
             ),
             ElevatedButton(
               onPressed: () {
@@ -2064,7 +2205,7 @@ class _PosViewState extends ConsumerState<PosView> {
                 backgroundColor: AppColors.error,
                 foregroundColor: Colors.white,
               ),
-              child: const Text('نعم، إلغاء الفاتورة', style: TextStyle(fontFamily: 'Cairo')),
+              child: Text('نعم، إلغاء الفاتورة', style: TextStyle(fontFamily: 'Cairo')),
             ),
           ],
         ),
@@ -2075,16 +2216,16 @@ class _PosViewState extends ConsumerState<PosView> {
   Widget _buildShortcutChip(String label) {
     return Container(
       margin: const EdgeInsets.only(left: 6),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: BorderRadius.circular(4.r),
       ),
       child: Text(
         label,
-        style: const TextStyle(
+        style: TextStyle(
           color: Colors.white70,
-          fontSize: 11,
+          fontSize: 11.sp,
           fontFamily: 'Cairo',
         ),
       ),
@@ -2131,7 +2272,7 @@ class _PosViewState extends ConsumerState<PosView> {
     return OutlinedButton.icon(
       onPressed: onTap,
       icon: Icon(icon, size: 16),
-      label: Text(label, style: const TextStyle(fontFamily: 'Cairo')),
+      label: Text(label, style: TextStyle(fontFamily: 'Cairo')),
       style: OutlinedButton.styleFrom(
         backgroundColor: isSelected ? AppColors.primarySurface : null,
         foregroundColor: isSelected
@@ -2141,7 +2282,7 @@ class _PosViewState extends ConsumerState<PosView> {
           color: isSelected ? AppColors.primary : AppColors.border,
           width: isSelected ? 2 : 1,
         ),
-        padding: const EdgeInsets.symmetric(vertical: 12),
+        padding: EdgeInsets.symmetric(vertical: 12.h),
       ),
     );
   }

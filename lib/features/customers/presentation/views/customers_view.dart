@@ -37,6 +37,121 @@ class _CustomersViewState extends ConsumerState<CustomersView> {
     );
   }
 
+
+  void _showReceivePaymentDialog(Customer customer) {
+    if (customer.balance <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('العميل ليس عليه مديونية.'),
+          backgroundColor: AppColors.success,
+        ),
+      );
+      return;
+    }
+
+    final formKey = GlobalKey<FormState>();
+    final amountController = TextEditingController(text: customer.balance.toStringAsFixed(2));
+    final notesController = TextEditingController();
+    bool isLoading = false;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: Text('تحصيل دفعة من ${customer.name}', style: const TextStyle(fontFamily: 'Cairo')),
+              content: Form(
+                key: formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'إجمالي المديونية: ${customer.balance.toStringAsFixed(2)} ج.م',
+                      style: const TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold, color: AppColors.error),
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: amountController,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                        labelText: 'المبلغ المحصل (ج.م)',
+                        border: OutlineInputBorder(),
+                      ),
+                      validator: (val) {
+                        if (val == null || val.isEmpty) return 'مطلوب';
+                        final num = double.tryParse(val);
+                        if (num == null || num <= 0) return 'قيمة غير صالحة';
+                        if (num > customer.balance) return 'المبلغ يتجاوز المديونية';
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: notesController,
+                      decoration: const InputDecoration(
+                        labelText: 'ملاحظات (اختياري)',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('إلغاء', style: TextStyle(fontFamily: 'Cairo')),
+                ),
+                ElevatedButton(
+                  onPressed: isLoading
+                      ? null
+                      : () async {
+                          if (!formKey.currentState!.validate()) return;
+                          setDialogState(() => isLoading = true);
+                          try {
+                            final db = ref.read(databaseProvider);
+                            final amount = double.parse(amountController.text);
+                            await DbHelpers.receiveCustomerPayment(
+                              db,
+                              customerId: customer.id,
+                              amount: amount,
+                              userId: 1, // Currently hardcoded user 1
+                              notes: notesController.text.isNotEmpty ? notesController.text : null,
+                            );
+                            if (mounted) {
+                              Navigator.pop(context);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('تم التحصيل بنجاح وتحديث الخزنة.'),
+                                  backgroundColor: AppColors.success,
+                                ),
+                              );
+                              // Refresh
+                              ref.invalidate(customersStreamProvider);
+                            }
+                          } catch (e) {
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('خطأ: $e')),
+                              );
+                            }
+                          } finally {
+                            setDialogState(() => isLoading = false);
+                          }
+                        },
+                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+                  child: isLoading
+                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                      : const Text('تأكيد التحصيل', style: TextStyle(fontFamily: 'Cairo', color: Colors.white)),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
   void _showCustomerDetailsDialog(Customer customer) {
     showDialog(
       context: context,
@@ -55,6 +170,16 @@ class _CustomersViewState extends ConsumerState<CustomersView> {
   }
 
   void _confirmDeleteCustomer(Customer customer) {
+    if (customer.balance != 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('لا يمكن حذف عميل لديه رصيد أو مديونية. يرجى تسوية الحساب أولاً.', style: TextStyle(fontFamily: 'Cairo')),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+    
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -315,6 +440,14 @@ class _CustomersViewState extends ConsumerState<CustomersView> {
                                 Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
+                                    if (customer.balance > 0)
+                                      IconButton(
+                                        icon: const Icon(LucideIcons.wallet, size: 18),
+                                        tooltip: 'تحصيل مديونية',
+                                        color: AppColors.success,
+                                        onPressed: () =>
+                                            _showReceivePaymentDialog(customer),
+                                      ),
                                     IconButton(
                                       icon: const Icon(LucideIcons.eye, size: 18),
                                       tooltip: 'عرض التفاصيل',

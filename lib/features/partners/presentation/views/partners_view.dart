@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:drift/drift.dart' as drift;
@@ -26,31 +27,31 @@ class _PartnersViewState extends ConsumerState<PartnersView> {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: EdgeInsets.all(24.w),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Header
             Row(
               children: [
-                const Expanded(
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         'إدارة الشركاء والحصص',
                         style: TextStyle(
-                          fontSize: 24,
+                          fontSize: 24.sp,
                           fontWeight: FontWeight.w700,
                           color: AppColors.textPrimary,
                           fontFamily: 'Cairo',
                         ),
                       ),
-                      SizedBox(height: 4),
+                      SizedBox(height: 4.h),
                       Text(
                         'متابعة الشركاء، النسبة المئوية ورأس المال وتوزيعات الأرباح',
                         style: TextStyle(
-                          fontSize: 14,
+                          fontSize: 14.sp,
                           color: AppColors.textSecondary,
                           fontFamily: 'Cairo',
                         ),
@@ -60,73 +61,74 @@ class _PartnersViewState extends ConsumerState<PartnersView> {
                 ),
                 ElevatedButton.icon(
                   onPressed: () => _showAddPartnerDialog(context, db),
-                  icon: const Icon(LucideIcons.userPlus, size: 18),
-                  label: const Text('إضافة شريك جديد', style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold)),
+                  icon: Icon(LucideIcons.userPlus, size: 18),
+                  label: Text('إضافة شريك جديد', style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold)),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 14.h),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.r)),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: 24.h),
 
             // Capital Metric
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(20),
+              padding: EdgeInsets.all(20.w),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(12.r),
                 border: Border.all(color: AppColors.border),
               ),
               child: Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(12),
+                    padding: EdgeInsets.all(12.w),
                     decoration: BoxDecoration(
                       color: AppColors.primary.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(10.r),
                     ),
-                    child: const Icon(LucideIcons.landmark, color: AppColors.primary, size: 24),
+                    child: Icon(LucideIcons.landmark, color: AppColors.primary, size: 24),
                   ),
-                  const SizedBox(width: 16),
+                  SizedBox(width: 16.w),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'إجمالي رأس مال الشركاء المسجل',
-                        style: TextStyle(fontSize: 12, color: AppColors.textSecondary, fontFamily: 'Cairo'),
+                        style: TextStyle(fontSize: 12.sp, color: AppColors.textSecondary, fontFamily: 'Cairo'),
                       ),
-                      const SizedBox(height: 4),
+                      SizedBox(height: 4.h),
                       Text(
                         '${totalCapital.toStringAsFixed(2)} ج.م',
-                        style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                        style: TextStyle(fontSize: 22.sp, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
                       ),
                     ],
                   ),
                   const Spacer(),
                   Text(
                     'عدد الشركاء: ${partners.length}',
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, fontFamily: 'Cairo', color: AppColors.textSecondary),
+                    style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.bold, fontFamily: 'Cairo', color: AppColors.textSecondary),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: 24.h),
 
             // Partners List
             Expanded(
               child: Container(
+                width: double.infinity,
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(12.r),
                   border: Border.all(color: AppColors.border),
                 ),
                 child: partners.isEmpty
-                    ? const Center(
+                    ? Center(
                         child: Text(
                           'لا يوجد شركاء مسجلين بالنظام حتى الآن',
                           style: TextStyle(color: AppColors.textTertiary, fontFamily: 'Cairo'),
@@ -134,58 +136,58 @@ class _PartnersViewState extends ConsumerState<PartnersView> {
                       )
                     : ListView.separated(
                         itemCount: partners.length,
-                        separatorBuilder: (_, __) => const Divider(height: 1),
+                        separatorBuilder: (_, __) => Divider(height: 1.h),
                         itemBuilder: (context, index) {
                           final p = partners[index];
                           return ListTile(
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                            contentPadding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 12.h),
                             leading: Container(
-                              padding: const EdgeInsets.all(10),
+                              padding: EdgeInsets.all(10.w),
                               decoration: BoxDecoration(
                                 color: AppColors.primary.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(10),
+                                borderRadius: BorderRadius.circular(10.r),
                               ),
-                              child: const Icon(LucideIcons.user, color: AppColors.primary, size: 22),
+                              child: Icon(LucideIcons.user, color: AppColors.primary, size: 22),
                             ),
                             title: Text(
                               p.name,
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontFamily: 'Cairo', fontSize: 15),
+                              style: TextStyle(fontWeight: FontWeight.bold, fontFamily: 'Cairo', fontSize: 15.sp),
                             ),
                             subtitle: Text(
                               'رأس المال: ${p.capital.toStringAsFixed(2)} ج.م | نسبة الشراكة: ${p.sharePercentage}% | تاريخ التسجيل: ${intl.DateFormat('yyyy/MM/dd').format(p.createdAt)}',
-                              style: const TextStyle(color: AppColors.textSecondary, fontFamily: 'Cairo', fontSize: 12),
+                              style: TextStyle(color: AppColors.textSecondary, fontFamily: 'Cairo', fontSize: 12.sp),
                             ),
                             trailing: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                  padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
                                   decoration: BoxDecoration(
                                     color: AppColors.primaryLight.withValues(alpha: 0.2),
-                                    borderRadius: BorderRadius.circular(8),
+                                    borderRadius: BorderRadius.circular(8.r),
                                   ),
                                   child: Text(
                                     '${p.sharePercentage}%',
-                                    style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primary, fontSize: 14),
+                                    style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.primary, fontSize: 14.sp),
                                   ),
                                 ),
-                                const SizedBox(width: 12),
+                                SizedBox(width: 12.w),
                                 IconButton(
-                                  icon: const Icon(LucideIcons.trash2, color: AppColors.error, size: 18),
+                                  icon: Icon(LucideIcons.trash2, color: AppColors.error, size: 18),
                                   onPressed: () async {
                                     final confirm = await showDialog<bool>(
                                       context: context,
                                       builder: (c) => Directionality(
                                         textDirection: TextDirection.rtl,
                                         child: AlertDialog(
-                                          title: const Text('حذف الشريك', style: TextStyle(fontFamily: 'Cairo')),
-                                          content: Text('هل أنت تأكد من حذف الشريك ${p.name}؟', style: const TextStyle(fontFamily: 'Cairo')),
+                                          title: Text('حذف الشريك', style: TextStyle(fontFamily: 'Cairo')),
+                                          content: Text('هل أنت تأكد من حذف الشريك ${p.name}؟', style: TextStyle(fontFamily: 'Cairo')),
                                           actions: [
-                                            TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('إلغاء')),
+                                            TextButton(onPressed: () => Navigator.pop(c, false), child: Text('إلغاء')),
                                             ElevatedButton(
                                               style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
                                               onPressed: () => Navigator.pop(c, true),
-                                              child: const Text('حذف', style: TextStyle(color: Colors.white)),
+                                              child: Text('حذف', style: TextStyle(color: Colors.white)),
                                             ),
                                           ],
                                         ),
@@ -220,15 +222,15 @@ class _PartnersViewState extends ConsumerState<PartnersView> {
         return Directionality(
           textDirection: TextDirection.rtl,
           child: AlertDialog(
-            title: const Row(
+            title: Row(
               children: [
                 Icon(LucideIcons.userPlus, color: AppColors.primary),
-                SizedBox(width: 8),
+                SizedBox(width: 8.w),
                 Text('إضافة شريك جديد', style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold)),
               ],
             ),
             content: SizedBox(
-              width: 450,
+              width: 450.w,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -239,7 +241,7 @@ class _PartnersViewState extends ConsumerState<PartnersView> {
                       border: OutlineInputBorder(),
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16.h),
                   TextField(
                     controller: percentageController,
                     keyboardType: TextInputType.number,
@@ -248,7 +250,7 @@ class _PartnersViewState extends ConsumerState<PartnersView> {
                       border: OutlineInputBorder(),
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16.h),
                   TextField(
                     controller: capitalController,
                     keyboardType: TextInputType.number,
@@ -263,7 +265,7 @@ class _PartnersViewState extends ConsumerState<PartnersView> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(dialogCtx),
-                child: const Text('إلغاء', style: TextStyle(fontFamily: 'Cairo', color: AppColors.textSecondary)),
+                child: Text('إلغاء', style: TextStyle(fontFamily: 'Cairo', color: AppColors.textSecondary)),
               ),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
@@ -288,7 +290,7 @@ class _PartnersViewState extends ConsumerState<PartnersView> {
                     }
                   }
                 },
-                child: const Text('حفظ الشريك', style: TextStyle(fontFamily: 'Cairo', color: Colors.white, fontWeight: FontWeight.bold)),
+                child: Text('حفظ الشريك', style: TextStyle(fontFamily: 'Cairo', color: Colors.white, fontWeight: FontWeight.bold)),
               ),
             ],
           ),

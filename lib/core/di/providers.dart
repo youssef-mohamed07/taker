@@ -85,3 +85,15 @@ final shiftsStreamProvider = StreamProvider<List<Shift>>((ref) {
     db.shifts,
   )..orderBy([(t) => OrderingTerm.desc(t.openedAt)])).watch();
 });
+
+final auditLogsStreamProvider = StreamProvider<List<AuditLogData>>((ref) {
+  final db = ref.watch(databaseProvider);
+  return (db.select(
+    db.auditLog,
+  )..orderBy([(t) => OrderingTerm.desc(t.createdAt)])).watch();
+});
+
+final usersStreamProvider = StreamProvider<List<User>>((ref) {
+  final db = ref.watch(databaseProvider);
+  return db.select(db.users).watch();
+});

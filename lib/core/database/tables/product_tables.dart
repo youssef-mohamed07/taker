@@ -75,3 +75,12 @@ class ProductPriceHistory extends Table {
   IntColumn get changedBy => integer().references(Users, #id)();
   DateTimeColumn get changedAt => dateTime().withDefault(currentDateAndTime)();
 }
+
+/// Product Batches for tracking expiration dates and quantities
+class ProductBatches extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get productId => integer().references(Products, #id)();
+  RealColumn get quantity => real().withDefault(const Constant(0))();
+  DateTimeColumn get expiryDate => dateTime().nullable()();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+}

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:intl/intl.dart' as intl;
@@ -48,31 +49,31 @@ class _ShiftsViewState extends ConsumerState<ShiftsView> {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: EdgeInsets.all(24.w),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Header
             Row(
               children: [
-                const Expanded(
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         'إدارة الشيفتات والورديات',
                         style: TextStyle(
-                          fontSize: 24,
+                          fontSize: 24.sp,
                           fontWeight: FontWeight.w700,
                           color: AppColors.textPrimary,
                           fontFamily: 'Cairo',
                         ),
                       ),
-                      SizedBox(height: 4),
+                      SizedBox(height: 4.h),
                       Text(
                         'متابعة النقدية عند استلام وتسليم الخزنة لكل وردية',
                         style: TextStyle(
-                          fontSize: 14,
+                          fontSize: 14.sp,
                           color: AppColors.textSecondary,
                           fontFamily: 'Cairo',
                         ),
@@ -83,40 +84,40 @@ class _ShiftsViewState extends ConsumerState<ShiftsView> {
                 if (openShift == null)
                   ElevatedButton.icon(
                     onPressed: () => _showOpenShiftDialog(context, db),
-                    icon: const Icon(LucideIcons.play, size: 18),
-                    label: const Text('فتح شيفت جديد',
+                    icon: Icon(LucideIcons.play, size: 18),
+                    label: Text('فتح شيفت جديد',
                         style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold)),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.success,
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 14.h),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.r)),
                     ),
                   )
                 else
                   ElevatedButton.icon(
                     onPressed: () => _showCloseShiftDialog(context, db, openShift, expectedTreasury),
-                    icon: const Icon(LucideIcons.square, size: 18),
-                    label: const Text('غلق الشيفت الحالي',
+                    icon: Icon(LucideIcons.square, size: 18),
+                    label: Text('غلق الشيفت الحالي',
                         style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold)),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.error,
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 14.h),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.r)),
                     ),
                   ),
               ],
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: 24.h),
 
             // Active Shift Status Card
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(20),
+              padding: EdgeInsets.all(20.w),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(12.r),
                 border: Border.all(
                   color: openShift != null ? AppColors.success : AppColors.border,
                   width: openShift != null ? 2 : 1,
@@ -127,11 +128,11 @@ class _ShiftsViewState extends ConsumerState<ShiftsView> {
                   Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(12),
+                        padding: EdgeInsets.all(12.w),
                         decoration: BoxDecoration(
                           color: (openShift != null ? AppColors.success : AppColors.warning)
                               .withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(10.r),
                         ),
                         child: Icon(
                           openShift != null ? LucideIcons.checkCircle : LucideIcons.clock,
@@ -139,7 +140,7 @@ class _ShiftsViewState extends ConsumerState<ShiftsView> {
                           size: 28,
                         ),
                       ),
-                      const SizedBox(width: 16),
+                      SizedBox(width: 16.w),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -148,20 +149,20 @@ class _ShiftsViewState extends ConsumerState<ShiftsView> {
                               openShift != null
                                   ? 'حالة الوردية: شيفت نشط حالياً (#${openShift.id})'
                                   : 'حالة الوردية: لا يوجد شيفت مفتوح',
-                              style: const TextStyle(
-                                fontSize: 16,
+                              style: TextStyle(
+                                fontSize: 16.sp,
                                 fontWeight: FontWeight.bold,
                                 fontFamily: 'Cairo',
                                 color: AppColors.textPrimary,
                               ),
                             ),
-                            const SizedBox(height: 4),
+                            SizedBox(height: 4.h),
                             Text(
                               openShift != null
                                   ? 'تم الفتح بتاريخ: ${intl.DateFormat('yyyy/MM/dd HH:mm').format(openShift.openedAt)}'
                                   : 'اضغط على زر "فتح شيفت جديد" لبدء الوردية وتحديد رصيد البداية بالخزنة',
-                              style: const TextStyle(
-                                  fontSize: 13, color: AppColors.textSecondary, fontFamily: 'Cairo'),
+                              style: TextStyle(
+                                  fontSize: 13.sp, color: AppColors.textSecondary, fontFamily: 'Cairo'),
                             ),
                           ],
                         ),
@@ -169,9 +170,9 @@ class _ShiftsViewState extends ConsumerState<ShiftsView> {
                     ],
                   ),
                   if (openShift != null) ...[
-                    const SizedBox(height: 16),
-                    const Divider(height: 1),
-                    const SizedBox(height: 16),
+                    SizedBox(height: 16.h),
+                    Divider(height: 1.h),
+                    SizedBox(height: 16.h),
                     Row(
                       children: [
                         Expanded(
@@ -182,7 +183,7 @@ class _ShiftsViewState extends ConsumerState<ShiftsView> {
                             color: AppColors.primary,
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        SizedBox(width: 12.w),
                         Expanded(
                           child: _buildMetricTile(
                             title: 'مقبوضات الشيفت (+)',
@@ -191,7 +192,7 @@ class _ShiftsViewState extends ConsumerState<ShiftsView> {
                             color: AppColors.success,
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        SizedBox(width: 12.w),
                         Expanded(
                           child: _buildMetricTile(
                             title: 'مصروفات الشيفت (-)',
@@ -200,7 +201,7 @@ class _ShiftsViewState extends ConsumerState<ShiftsView> {
                             color: AppColors.error,
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        SizedBox(width: 12.w),
                         Expanded(
                           child: _buildMetricTile(
                             title: 'المتوقع بالخزنة الآن',
@@ -215,131 +216,142 @@ class _ShiftsViewState extends ConsumerState<ShiftsView> {
                 ],
               ),
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: 24.h),
 
-            const Text(
+            Text(
               'سجل الشيفتات والورديات السابقة',
               style: TextStyle(
-                fontSize: 18,
+                fontSize: 18.sp,
                 fontWeight: FontWeight.bold,
                 fontFamily: 'Cairo',
                 color: AppColors.textPrimary,
               ),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12.h),
 
             // Shifts List Table
             Expanded(
               child: Container(
+                width: double.infinity,
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(12.r),
                   border: Border.all(color: AppColors.border),
                 ),
                 child: shifts.isEmpty
-                    ? const Center(
+                    ? Center(
                         child: Text(
                           'لا يوجد سجل شيفتات بعد',
                           style: TextStyle(color: AppColors.textTertiary, fontFamily: 'Cairo'),
                         ),
                       )
-                    : ListView.separated(
-                        itemCount: shifts.length,
-                        separatorBuilder: (_, __) => const Divider(height: 1),
-                        itemBuilder: (context, index) {
-                          final s = shifts[index];
-                          final isOpen = s.status == 'open';
-
-                          return ListTile(
-                            contentPadding:
-                                const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                            leading: Container(
-                              padding: const EdgeInsets.all(10),
-                              decoration: BoxDecoration(
-                                color: (isOpen ? AppColors.success : AppColors.primary)
-                                    .withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Icon(
-                                isOpen ? LucideIcons.play : LucideIcons.checkCheck,
-                                color: isOpen ? AppColors.success : AppColors.primary,
-                                size: 20,
-                              ),
+                    : LayoutBuilder(builder: (context, constraints) => SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: ConstrainedBox(constraints: BoxConstraints(minWidth: constraints.maxWidth), child: SingleChildScrollView(
+                          child: DataTable(
+                            headingTextStyle: TextStyle(
+                              fontFamily: 'Cairo',
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.textPrimary,
+                              fontSize: 14.sp,
                             ),
-                            title: Row(
-                              children: [
-                                Text(
-                                  'شيفت #${s.id}',
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.bold, fontFamily: 'Cairo'),
-                                ),
-                                const SizedBox(width: 12),
-                                Container(
-                                  padding:
-                                      const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                  decoration: BoxDecoration(
-                                    color: isOpen
-                                        ? AppColors.successLight
-                                        : AppColors.surfaceVariant,
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                  child: Text(
-                                    isOpen ? 'مفتوح' : 'مغلق',
-                                    style: TextStyle(
-                                      color: isOpen
-                                          ? AppColors.success
-                                          : AppColors.textSecondary,
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.bold,
-                                      fontFamily: 'Cairo',
+                            dataTextStyle: TextStyle(
+                              fontFamily: 'Cairo',
+                              color: AppColors.textPrimary,
+                              fontSize: 14.sp,
+                            ),
+                            columnSpacing: 60.w,
+                            horizontalMargin: 24.w,
+                            dividerThickness: 1.h,
+                            showBottomBorder: true,
+                            columns: const [
+                              DataColumn(label: Text('الشيفت')),
+                              DataColumn(label: Text('الحالة')),
+                              DataColumn(label: Text('الفترة الزمنية')),
+                              DataColumn(label: Text('الرصيد الافتتاحي')),
+                              DataColumn(label: Text('رصيد الإغلاق')),
+                              DataColumn(label: Text('الفارق')),
+                            ],
+                            rows: shifts.map((s) {
+                              final isOpen = s.status == 'open';
+
+                              return DataRow(
+                                cells: [
+                                  DataCell(
+                                    Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Container(
+                                          padding: EdgeInsets.all(8.w),
+                                          decoration: BoxDecoration(
+                                            color: (isOpen ? AppColors.success : AppColors.primary).withValues(alpha: 0.1),
+                                            borderRadius: BorderRadius.circular(8.r),
+                                          ),
+                                          child: Icon(
+                                            isOpen ? LucideIcons.play : LucideIcons.checkCheck,
+                                            color: isOpen ? AppColors.success : AppColors.primary,
+                                            size: 16,
+                                          ),
+                                        ),
+                                        SizedBox(width: 8.w),
+                                        Text('شيفت #${s.id}', style: TextStyle(fontWeight: FontWeight.bold)),
+                                      ],
                                     ),
                                   ),
-                                ),
-                              ],
-                            ),
-                            subtitle: Text(
-                              'الفترة: ${intl.DateFormat('yyyy/MM/dd HH:mm').format(s.openedAt)} '
-                              '${s.closedAt != null ? '- ${intl.DateFormat('HH:mm').format(s.closedAt!)}' : ''}',
-                              style: const TextStyle(
-                                  color: AppColors.textSecondary,
-                                  fontFamily: 'Cairo',
-                                  fontSize: 12),
-                            ),
-                            trailing: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                Text(
-                                  'الافتتاحي: ${s.openingBalance.toStringAsFixed(2)} ج.م',
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.bold, fontFamily: 'Cairo'),
-                                ),
-                                if (s.closingBalance != null) ...[
-                                  Text(
-                                    'الإغلاق: ${s.closingBalance!.toStringAsFixed(2)} ج.م (المتوقع: ${(s.expectedBalance ?? 0).toStringAsFixed(2)})',
-                                    style: const TextStyle(
-                                        fontSize: 11,
-                                        color: AppColors.textSecondary,
-                                        fontFamily: 'Cairo'),
-                                  ),
-                                  if ((s.difference ?? 0) != 0)
-                                    Text(
-                                      'الفارق (عجز/زيادة): ${s.difference! > 0 ? '+' : ''}${s.difference!.toStringAsFixed(2)} ج.م',
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.bold,
-                                        color: s.difference! < 0
-                                            ? AppColors.error
-                                            : AppColors.success,
-                                        fontFamily: 'Cairo',
+                                  DataCell(
+                                    Container(
+                                      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                                      decoration: BoxDecoration(
+                                        color: isOpen ? AppColors.successLight : AppColors.surfaceVariant,
+                                        borderRadius: BorderRadius.circular(6.r),
+                                      ),
+                                      child: Text(
+                                        isOpen ? 'مفتوح' : 'مغلق',
+                                        style: TextStyle(
+                                          color: isOpen ? AppColors.success : AppColors.textSecondary,
+                                          fontSize: 11.sp,
+                                          fontWeight: FontWeight.bold,
+                                        ),
                                       ),
                                     ),
+                                  ),
+                                  DataCell(
+                                    Text(
+                                      '${intl.DateFormat('yyyy/MM/dd HH:mm').format(s.openedAt)} '
+                                      '${s.closedAt != null ? '- ${intl.DateFormat('HH:mm').format(s.closedAt!)}' : ''}',
+                                      style: TextStyle(color: AppColors.textSecondary, fontSize: 13.sp),
+                                    ),
+                                  ),
+                                  DataCell(Text('${s.openingBalance.toStringAsFixed(2)} ج.م', style: TextStyle(fontWeight: FontWeight.bold))),
+                                  DataCell(
+                                    s.closingBalance != null
+                                        ? Column(
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text('${s.closingBalance!.toStringAsFixed(2)} ج.م', style: TextStyle(fontWeight: FontWeight.bold)),
+                                              Text('المتوقع: ${(s.expectedBalance ?? 0).toStringAsFixed(2)}', style: TextStyle(fontSize: 11.sp, color: AppColors.textSecondary)),
+                                            ],
+                                          )
+                                        : Text('---', style: TextStyle(color: AppColors.textTertiary)),
+                                  ),
+                                  DataCell(
+                                    s.closingBalance != null && (s.difference ?? 0) != 0
+                                        ? Text(
+                                            '${s.difference! > 0 ? '+' : ''}${s.difference!.toStringAsFixed(2)} ج.م',
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              color: s.difference! < 0 ? AppColors.error : AppColors.success,
+                                            ),
+                                          )
+                                        : Text(s.closingBalance != null ? 'متطابق' : '---', style: TextStyle(color: AppColors.textSecondary)),
+                                  ),
                                 ],
-                              ],
-                            ),
-                          );
-                        },
-                      ),
+                              );
+                            }).toList(),
+                          ),
+                        )),
+                      )),
               ),
             ),
           ],
@@ -355,29 +367,29 @@ class _ShiftsViewState extends ConsumerState<ShiftsView> {
     required Color color,
   }) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: EdgeInsets.all(12.w),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(8.r),
         border: Border.all(color: color.withValues(alpha: 0.2)),
       ),
       child: Row(
         children: [
           Icon(icon, color: color, size: 20),
-          const SizedBox(width: 8),
+          SizedBox(width: 8.w),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
-                      fontSize: 11, color: AppColors.textSecondary, fontFamily: 'Cairo'),
+                  style: TextStyle(
+                      fontSize: 11.sp, color: AppColors.textSecondary, fontFamily: 'Cairo'),
                 ),
                 Text(
                   value,
                   style: TextStyle(
-                    fontSize: 13,
+                    fontSize: 13.sp,
                     fontWeight: FontWeight.bold,
                     color: color,
                     fontFamily: 'Cairo',
@@ -393,60 +405,117 @@ class _ShiftsViewState extends ConsumerState<ShiftsView> {
 
   void _showOpenShiftDialog(BuildContext context, AppDatabase db) {
     final balanceController = TextEditingController(text: '0');
+    List<String> selectedCompanions = [];
+    bool isLoadingPartners = true;
+    List<Partner> partners = [];
 
     showDialog(
       context: context,
       builder: (dialogCtx) {
-        return Directionality(
-          textDirection: TextDirection.rtl,
-          child: AlertDialog(
-            title: const Row(
-              children: [
-                Icon(LucideIcons.play, color: AppColors.success),
-                SizedBox(width: 8),
-                Text('فتح وردية جديدة',
-                    style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold)),
-              ],
-            ),
-            content: SizedBox(
-              width: 400,
-              child: TextField(
-                controller: balanceController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'المبلغ الافتتاحي بالخزنة (ج.م)',
-                  border: OutlineInputBorder(),
+        return StatefulBuilder(
+          builder: (context, setState) {
+            if (isLoadingPartners) {
+              db.select(db.partners).get().then((value) {
+                if (mounted) {
+                  setState(() {
+                    partners = value;
+                    isLoadingPartners = false;
+                  });
+                }
+              });
+            }
+
+            return Directionality(
+              textDirection: TextDirection.rtl,
+              child: AlertDialog(
+                title: Row(
+                  children: [
+                    Icon(LucideIcons.play, color: AppColors.success),
+                    SizedBox(width: 8.w),
+                    Text('فتح وردية جديدة',
+                        style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold)),
+                  ],
                 ),
+                content: SizedBox(
+                  width: 450.w,
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        TextField(
+                          controller: balanceController,
+                          keyboardType: TextInputType.number,
+                          decoration: const InputDecoration(
+                            labelText: 'المبلغ الافتتاحي بالخزنة (ج.م)',
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                        SizedBox(height: 20.h),
+                        Text('شركاء / مرافقين الشيفت (اختياري):', style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold, fontSize: 14.sp)),
+                        SizedBox(height: 8.h),
+                        if (isLoadingPartners)
+                          const Center(child: CircularProgressIndicator())
+                        else if (partners.isEmpty)
+                          Text('لا يوجد شركاء مضافين حالياً.', style: TextStyle(fontFamily: 'Cairo', color: AppColors.textSecondary, fontSize: 13.sp))
+                        else
+                          Wrap(
+                            spacing: 8.w,
+                            runSpacing: 8.h,
+                            children: partners.map((p) {
+                              final isSelected = selectedCompanions.contains(p.name);
+                              return FilterChip(
+                                label: Text(p.name, style: TextStyle(fontFamily: 'Cairo', fontSize: 13.sp, color: isSelected ? Colors.white : AppColors.textPrimary)),
+                                selected: isSelected,
+                                selectedColor: AppColors.primary,
+                                checkmarkColor: Colors.white,
+                                onSelected: (selected) {
+                                  setState(() {
+                                    if (selected) {
+                                      selectedCompanions.add(p.name);
+                                    } else {
+                                      selectedCompanions.remove(p.name);
+                                    }
+                                  });
+                                },
+                              );
+                            }).toList(),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(dialogCtx),
+                    child: Text('إلغاء',
+                        style: TextStyle(fontFamily: 'Cairo', color: AppColors.textSecondary)),
+                  ),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(backgroundColor: AppColors.success),
+                    onPressed: () async {
+                      final opening = double.tryParse(balanceController.text) ?? 0;
+                      final companionNames = selectedCompanions.isNotEmpty ? selectedCompanions.join(', ') : null;
+                      try {
+                        await DbHelpers.openShift(db, openingBalance: opening, userId: 1, companionNames: companionNames);
+                        if (dialogCtx.mounted) {
+                          Navigator.pop(dialogCtx);
+                          AppErrorHandler.showSuccessSnackBar(context, 'تم فتح الوردية بنجاح!');
+                        }
+                      } catch (e) {
+                        if (dialogCtx.mounted) {
+                          AppErrorHandler.showErrorDialog(context, e, title: 'خطأ في فتح الوردية');
+                        }
+                      }
+                    },
+                    child: Text('فتح الشيفت',
+                        style: TextStyle(
+                            fontFamily: 'Cairo', color: Colors.white, fontWeight: FontWeight.bold)),
+                  ),
+                ],
               ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(dialogCtx),
-                child: const Text('إلغاء',
-                    style: TextStyle(fontFamily: 'Cairo', color: AppColors.textSecondary)),
-              ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(backgroundColor: AppColors.success),
-                onPressed: () async {
-                  final opening = double.tryParse(balanceController.text) ?? 0;
-                  try {
-                    await DbHelpers.openShift(db, openingBalance: opening, userId: 1);
-                    if (dialogCtx.mounted) {
-                      Navigator.pop(dialogCtx);
-                      AppErrorHandler.showSuccessSnackBar(context, 'تم فتح الوردية بنجاح!');
-                    }
-                  } catch (e) {
-                    if (dialogCtx.mounted) {
-                      AppErrorHandler.showErrorDialog(context, e, title: 'خطأ في فتح الوردية');
-                    }
-                  }
-                },
-                child: const Text('فتح الشيفت',
-                    style: TextStyle(
-                        fontFamily: 'Cairo', color: Colors.white, fontWeight: FontWeight.bold)),
-              ),
-            ],
-          ),
+            );
+          }
         );
       },
     );
@@ -463,45 +532,45 @@ class _ShiftsViewState extends ConsumerState<ShiftsView> {
         return Directionality(
           textDirection: TextDirection.rtl,
           child: AlertDialog(
-            title: const Row(
+            title: Row(
               children: [
                 Icon(LucideIcons.square, color: AppColors.error),
-                SizedBox(width: 8),
+                SizedBox(width: 8.w),
                 Text('إغلاق الوردية الحالية',
                     style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold)),
               ],
             ),
             content: SizedBox(
-              width: 420,
+              width: 420.w,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(12),
+                    padding: EdgeInsets.all(12.w),
                     decoration: BoxDecoration(
                       color: AppColors.surfaceVariant,
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(8.r),
                     ),
                     child: Column(
                       children: [
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text('الرصيد الافتتاحي:', style: TextStyle(fontFamily: 'Cairo')),
+                            Text('الرصيد الافتتاحي:', style: TextStyle(fontFamily: 'Cairo')),
                             Text('${shift.openingBalance.toStringAsFixed(2)} ج.م',
-                                style: const TextStyle(
+                                style: TextStyle(
                                     fontFamily: 'Cairo', fontWeight: FontWeight.bold)),
                           ],
                         ),
-                        const SizedBox(height: 6),
+                        SizedBox(height: 6.h),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text('المبلغ المتوقع توفره بالخزنة:',
+                            Text('المبلغ المتوقع توفره بالخزنة:',
                                 style: TextStyle(fontFamily: 'Cairo', color: AppColors.primary)),
                             Text('${expectedBalance.toStringAsFixed(2)} ج.م',
-                                style: const TextStyle(
+                                style: TextStyle(
                                     fontFamily: 'Cairo',
                                     fontWeight: FontWeight.bold,
                                     color: AppColors.primary)),
@@ -510,7 +579,7 @@ class _ShiftsViewState extends ConsumerState<ShiftsView> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16.h),
                   TextField(
                     controller: closingController,
                     keyboardType: TextInputType.number,
@@ -519,7 +588,7 @@ class _ShiftsViewState extends ConsumerState<ShiftsView> {
                       border: OutlineInputBorder(),
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  SizedBox(height: 12.h),
                   TextField(
                     controller: notesController,
                     decoration: const InputDecoration(
@@ -533,7 +602,7 @@ class _ShiftsViewState extends ConsumerState<ShiftsView> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(dialogCtx),
-                child: const Text('إلغاء',
+                child: Text('إلغاء',
                     style: TextStyle(fontFamily: 'Cairo', color: AppColors.textSecondary)),
               ),
               ElevatedButton(
@@ -559,7 +628,7 @@ class _ShiftsViewState extends ConsumerState<ShiftsView> {
                     }
                   }
                 },
-                child: const Text(
+                child: Text(
                   'تأكيد الإغلاق',
                   style: TextStyle(
                       fontFamily: 'Cairo', color: Colors.white, fontWeight: FontWeight.bold),

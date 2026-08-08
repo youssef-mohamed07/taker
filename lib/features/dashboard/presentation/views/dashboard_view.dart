@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
@@ -64,31 +65,31 @@ class DashboardView extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
+        padding: EdgeInsets.all(24.w),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Header
             Row(
               children: [
-                const Expanded(
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         'لوحة التحكم',
                         style: TextStyle(
-                          fontSize: 24,
+                          fontSize: 24.sp,
                           fontWeight: FontWeight.w700,
                           color: AppColors.textPrimary,
                           fontFamily: 'Cairo',
                         ),
                       ),
-                      SizedBox(height: 4),
+                      SizedBox(height: 4.h),
                       Text(
                         'مرحباً بك في نظام تاجر لإدارة تجارة الجملة والقطاعي',
                         style: TextStyle(
-                          fontSize: 14,
+                          fontSize: 14.sp,
                           color: AppColors.textSecondary,
                           fontFamily: 'Cairo',
                         ),
@@ -96,16 +97,14 @@ class DashboardView extends ConsumerWidget {
                     ],
                   ),
                 ),
-                _buildQuickAction(
-                  context,
+                _buildQuickAction(context,
                   LucideIcons.monitor,
                   'نقطة البيع',
                   AppColors.primary,
                   () => context.push('/pos'),
                 ),
-                const SizedBox(width: 8),
-                _buildQuickAction(
-                  context,
+                SizedBox(width: 8.w),
+                _buildQuickAction(context,
                   LucideIcons.plus,
                   'منتج جديد',
                   AppColors.success,
@@ -113,13 +112,13 @@ class DashboardView extends ConsumerWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: 24.h),
 
             // KPI Cards Row
             Row(
               children: [
                 Expanded(
-                  child: _buildKpiCard(
+                  child: _buildKpiCard(context, 
                     'مبيعات اليوم',
                     todaySales.toStringAsFixed(2),
                     'ج.م',
@@ -127,9 +126,9 @@ class DashboardView extends ConsumerWidget {
                     AppColors.primary,
                   ),
                 ),
-                const SizedBox(width: 16),
+                SizedBox(width: 16.w),
                 Expanded(
-                  child: _buildKpiCard(
+                  child: _buildKpiCard(context, 
                     'مبيعات الشهر',
                     monthSales.toStringAsFixed(2),
                     'ج.م',
@@ -137,9 +136,9 @@ class DashboardView extends ConsumerWidget {
                     AppColors.info,
                   ),
                 ),
-                const SizedBox(width: 16),
+                SizedBox(width: 16.w),
                 Expanded(
-                  child: _buildKpiCard(
+                  child: _buildKpiCard(context, 
                     'الأرباح التقديرية',
                     totalProfits.toStringAsFixed(2),
                     'ج.م',
@@ -147,9 +146,9 @@ class DashboardView extends ConsumerWidget {
                     AppColors.success,
                   ),
                 ),
-                const SizedBox(width: 16),
+                SizedBox(width: 16.w),
                 Expanded(
-                  child: _buildKpiCard(
+                  child: _buildKpiCard(context, 
                     'قيمة المخزون',
                     inventoryValue.toStringAsFixed(2),
                     'ج.م',
@@ -159,49 +158,49 @@ class DashboardView extends ConsumerWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16.h),
 
             // Stats Cards Row
             Row(
               children: [
                 Expanded(
-                  child: _buildStatCard(
+                  child: _buildStatCard(context, 
                     'المنتجات',
                     '${products.length}',
                     LucideIcons.box,
                     AppColors.primaryLight,
                   ),
                 ),
-                const SizedBox(width: 16),
+                SizedBox(width: 16.w),
                 Expanded(
-                  child: _buildStatCard(
+                  child: _buildStatCard(context, 
                     'الفواتير',
                     '${invoices.length}',
                     LucideIcons.receipt,
                     AppColors.success,
                   ),
                 ),
-                const SizedBox(width: 16),
+                SizedBox(width: 16.w),
                 Expanded(
-                  child: _buildStatCard(
+                  child: _buildStatCard(context, 
                     'العملاء',
                     '${customers.length}',
                     LucideIcons.users,
                     AppColors.info,
                   ),
                 ),
-                const SizedBox(width: 16),
+                SizedBox(width: 16.w),
                 Expanded(
-                  child: _buildStatCard(
+                  child: _buildStatCard(context, 
                     'الموردون',
                     '${suppliers.length}',
                     LucideIcons.truck,
                     AppColors.warning,
                   ),
                 ),
-                const SizedBox(width: 16),
+                SizedBox(width: 16.w),
                 Expanded(
-                  child: _buildStatCard(
+                  child: _buildStatCard(context, 
                     'نواقص المخزن',
                     '${lowStockProducts.length}',
                     LucideIcons.alertTriangle,
@@ -210,7 +209,7 @@ class DashboardView extends ConsumerWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: 24.h),
 
             // Charts & Alerts Row
             Row(
@@ -219,30 +218,30 @@ class DashboardView extends ConsumerWidget {
                 // Sales chart
                 Expanded(
                   flex: 2,
-                  child: _buildSalesChartCard('مبيعات آخر 7 أيام', last7DaysSales),
+                  child: _buildSalesChartCard(context, 'مبيعات آخر 7 أيام', last7DaysSales),
                 ),
-                const SizedBox(width: 16),
+                SizedBox(width: 16.w),
                 // Alerts
-                Expanded(child: _buildAlertsCard(lowStockProducts)),
+                Expanded(child: _buildAlertsCard(context, lowStockProducts)),
               ],
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: 24.h),
 
             // Recent invoices & best products
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
-                  child: _buildRecentInvoicesCard(
+                  child: _buildRecentInvoicesCard(context, 
                     'آخر الفواتير',
                     LucideIcons.receipt,
                     invoices.take(5).toList(),
                     customersList,
                   ),
                 ),
-                const SizedBox(width: 16),
+                SizedBox(width: 16.w),
                 Expanded(
-                  child: _buildTopProductsCard(
+                  child: _buildTopProductsCard(context, 
                     'أفضل المنتجات بالمخزن',
                     LucideIcons.star,
                     products.take(5).toList(),
@@ -266,17 +265,17 @@ class DashboardView extends ConsumerWidget {
     return ElevatedButton.icon(
       onPressed: onTap,
       icon: Icon(icon, size: 18),
-      label: Text(label, style: const TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold)),
+      label: Text(label, style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold)),
       style: ElevatedButton.styleFrom(
         backgroundColor: color,
         foregroundColor: Colors.white,
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 14.h),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.r)),
       ),
     );
   }
 
-  Widget _buildKpiCard(
+  Widget _buildKpiCard(BuildContext context, 
     String title,
     String value,
     String unit,
@@ -284,10 +283,10 @@ class DashboardView extends ConsumerWidget {
     Color color,
   ) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(20.w),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(12.r),
         border: Border.all(color: AppColors.border),
       ),
       child: Column(
@@ -296,25 +295,25 @@ class DashboardView extends ConsumerWidget {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(8),
+                padding: EdgeInsets.all(8.w),
                 decoration: BoxDecoration(
                   color: color.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(8.r),
                 ),
                 child: Icon(icon, color: color, size: 20),
               ),
               const Spacer(),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
                 decoration: BoxDecoration(
                   color: AppColors.successLight,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(12.r),
                 ),
-                child: const Text(
+                child: Text(
                   'مباشر',
                   style: TextStyle(
                     color: AppColors.success,
-                    fontSize: 11,
+                    fontSize: 11.sp,
                     fontWeight: FontWeight.w600,
                     fontFamily: 'Cairo',
                   ),
@@ -322,16 +321,16 @@ class DashboardView extends ConsumerWidget {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16.h),
           Text(
             title,
-            style: const TextStyle(
-              fontSize: 13,
+            style: TextStyle(
+              fontSize: 13.sp,
               color: AppColors.textSecondary,
               fontFamily: 'Cairo',
             ),
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: 4.h),
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
@@ -339,21 +338,21 @@ class DashboardView extends ConsumerWidget {
                 fit: BoxFit.scaleDown,
                 child: Text(
                   value,
-                  style: const TextStyle(
-                    fontSize: 22,
+                  style: TextStyle(
+                    fontSize: 22.sp,
                     fontWeight: FontWeight.w700,
                     color: AppColors.textPrimary,
                     fontFamily: 'Cairo',
                   ),
                 ),
               ),
-              const SizedBox(width: 4),
+              SizedBox(width: 4.w),
               Padding(
                 padding: const EdgeInsets.only(bottom: 4),
                 child: Text(
                   unit,
-                  style: const TextStyle(
-                    fontSize: 12,
+                  style: TextStyle(
+                    fontSize: 12.sp,
                     color: AppColors.textSecondary,
                     fontFamily: 'Cairo',
                   ),
@@ -366,38 +365,38 @@ class DashboardView extends ConsumerWidget {
     );
   }
 
-  Widget _buildStatCard(
+  Widget _buildStatCard(BuildContext context, 
     String title,
     String value,
     IconData icon,
     Color color,
   ) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(12.r),
         border: Border.all(color: AppColors.border),
       ),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(10),
+            padding: EdgeInsets.all(10.w),
             decoration: BoxDecoration(
               color: color.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(10.r),
             ),
             child: Icon(icon, color: color, size: 22),
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: 12.w),
           Flexible(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   value,
-                  style: const TextStyle(
-                    fontSize: 20,
+                  style: TextStyle(
+                    fontSize: 20.sp,
                     fontWeight: FontWeight.w700,
                     color: AppColors.textPrimary,
                   ),
@@ -405,8 +404,8 @@ class DashboardView extends ConsumerWidget {
                 ),
                 Text(
                   title,
-                  style: const TextStyle(
-                    fontSize: 12,
+                  style: TextStyle(
+                    fontSize: 12.sp,
                     color: AppColors.textSecondary,
                     fontFamily: 'Cairo',
                   ),
@@ -420,17 +419,17 @@ class DashboardView extends ConsumerWidget {
     );
   }
 
-  Widget _buildSalesChartCard(String title, Map<String, double> salesData) {
+  Widget _buildSalesChartCard(BuildContext context, String title, Map<String, double> salesData) {
     final maxSale = salesData.values.isEmpty
         ? 100.0
         : (salesData.values.reduce((a, b) => a > b ? a : b) == 0 ? 100.0 : salesData.values.reduce((a, b) => a > b ? a : b));
 
     return Container(
-      height: 320,
-      padding: const EdgeInsets.all(20),
+      height: 320.h,
+      padding: EdgeInsets.all(20.w),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(12.r),
         border: Border.all(color: AppColors.border),
       ),
       child: Column(
@@ -438,12 +437,12 @@ class DashboardView extends ConsumerWidget {
         children: [
           Row(
             children: [
-              const Icon(LucideIcons.barChart2, color: AppColors.primary, size: 20),
-              const SizedBox(width: 8),
+              Icon(LucideIcons.barChart2, color: AppColors.primary, size: 20),
+              SizedBox(width: 8.w),
               Text(
                 title,
-                style: const TextStyle(
-                  fontSize: 16,
+                style: TextStyle(
+                  fontSize: 16.sp,
                   fontWeight: FontWeight.w600,
                   color: AppColors.textPrimary,
                   fontFamily: 'Cairo',
@@ -451,7 +450,7 @@ class DashboardView extends ConsumerWidget {
               ),
             ],
           ),
-          const SizedBox(height: 24),
+          SizedBox(height: 24.h),
           Expanded(
             child: LayoutBuilder(
               builder: (context, constraints) {
@@ -468,16 +467,16 @@ class DashboardView extends ConsumerWidget {
                       children: [
                         Text(
                           entry.value > 0 ? entry.value.toStringAsFixed(0) : '0',
-                          style: const TextStyle(
-                            fontSize: 10,
+                          style: TextStyle(
+                            fontSize: 10.sp,
                             color: AppColors.textSecondary,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        const SizedBox(height: 6),
+                        SizedBox(height: 6.h),
                         AnimatedContainer(
                           duration: const Duration(milliseconds: 500),
-                          width: 32,
+                          width: 32.w,
                           height: barHeight,
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
@@ -488,14 +487,14 @@ class DashboardView extends ConsumerWidget {
                               begin: Alignment.topCenter,
                               end: Alignment.bottomCenter,
                             ),
-                            borderRadius: BorderRadius.circular(6),
+                            borderRadius: BorderRadius.circular(6.r),
                           ),
                         ),
-                        const SizedBox(height: 8),
+                        SizedBox(height: 8.h),
                         Text(
                           entry.key,
-                          style: const TextStyle(
-                            fontSize: 11,
+                          style: TextStyle(
+                            fontSize: 11.sp,
                             color: AppColors.textSecondary,
                             fontFamily: 'Cairo',
                           ),
@@ -512,13 +511,13 @@ class DashboardView extends ConsumerWidget {
     );
   }
 
-  Widget _buildAlertsCard(List<Product> lowStockProducts) {
+  Widget _buildAlertsCard(BuildContext context, List<Product> lowStockProducts) {
     return Container(
-      height: 320,
-      padding: const EdgeInsets.all(20),
+      height: 320.h,
+      padding: EdgeInsets.all(20.w),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(12.r),
         border: Border.all(color: AppColors.border),
       ),
       child: Column(
@@ -526,12 +525,12 @@ class DashboardView extends ConsumerWidget {
         children: [
           Row(
             children: [
-              const Icon(LucideIcons.bell, size: 18, color: AppColors.warning),
-              const SizedBox(width: 8),
-              const Text(
+              Icon(LucideIcons.bell, size: 18, color: AppColors.warning),
+              SizedBox(width: 8.w),
+              Text(
                 'تنبيهات النظام',
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: 16.sp,
                   fontWeight: FontWeight.w600,
                   color: AppColors.textPrimary,
                   fontFamily: 'Cairo',
@@ -539,26 +538,26 @@ class DashboardView extends ConsumerWidget {
               ),
               const Spacer(),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
                 decoration: BoxDecoration(
                   color: lowStockProducts.isEmpty ? AppColors.successLight : AppColors.errorLight,
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(10.r),
                 ),
                 child: Text(
                   '${lowStockProducts.length}',
                   style: TextStyle(
                     color: lowStockProducts.isEmpty ? AppColors.success : AppColors.error,
-                    fontSize: 12,
+                    fontSize: 12.sp,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16.h),
           Expanded(
             child: lowStockProducts.isEmpty
-                ? const Center(
+                ? Center(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -567,7 +566,7 @@ class DashboardView extends ConsumerWidget {
                           size: 40,
                           color: AppColors.success,
                         ),
-                        SizedBox(height: 8),
+                        SizedBox(height: 8.h),
                         Text(
                           'لا توجد تنبيهات - المخزون ممتاز',
                           style: TextStyle(
@@ -580,26 +579,26 @@ class DashboardView extends ConsumerWidget {
                   )
                 : ListView.separated(
                     itemCount: lowStockProducts.length,
-                    separatorBuilder: (_, __) => const Divider(height: 1),
+                    separatorBuilder: (_, __) => Divider(height: 1.h),
                     itemBuilder: (context, index) {
                       final item = lowStockProducts[index];
                       return ListTile(
                         dense: true,
                         contentPadding: EdgeInsets.zero,
-                        leading: const Icon(LucideIcons.alertOctagon, color: AppColors.error, size: 18),
+                        leading: Icon(LucideIcons.alertOctagon, color: AppColors.error, size: 18),
                         title: Text(
                           item.nameAr,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontFamily: 'Cairo',
                             fontWeight: FontWeight.bold,
-                            fontSize: 13,
+                            fontSize: 13.sp,
                           ),
                         ),
                         subtitle: Text(
                           'المتبقي: ${item.currentQuantity} قطعة (الحد الأدنى: ${item.minQuantity})',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontFamily: 'Cairo',
-                            fontSize: 11,
+                            fontSize: 11.sp,
                             color: AppColors.textSecondary,
                           ),
                         ),
@@ -612,7 +611,7 @@ class DashboardView extends ConsumerWidget {
     );
   }
 
-  Widget _buildRecentInvoicesCard(
+  Widget _buildRecentInvoicesCard(BuildContext context, 
     String title,
     IconData icon,
     List<Invoice> recentInvoices,
@@ -621,11 +620,11 @@ class DashboardView extends ConsumerWidget {
     final customerMap = {for (var c in customers) c.id: c.name};
 
     return Container(
-      height: 280,
-      padding: const EdgeInsets.all(20),
+      height: 280.h,
+      padding: EdgeInsets.all(20.w),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(12.r),
         border: Border.all(color: AppColors.border),
       ),
       child: Column(
@@ -634,11 +633,11 @@ class DashboardView extends ConsumerWidget {
           Row(
             children: [
               Icon(icon, size: 18, color: AppColors.primary),
-              const SizedBox(width: 8),
+              SizedBox(width: 8.w),
               Text(
                 title,
-                style: const TextStyle(
-                  fontSize: 16,
+                style: TextStyle(
+                  fontSize: 16.sp,
                   fontWeight: FontWeight.w600,
                   color: AppColors.textPrimary,
                   fontFamily: 'Cairo',
@@ -646,10 +645,10 @@ class DashboardView extends ConsumerWidget {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16.h),
           Expanded(
             child: recentInvoices.isEmpty
-                ? const Center(
+                ? Center(
                     child: Text(
                       'لا توجد فواتير بعد',
                       style: TextStyle(
@@ -660,7 +659,7 @@ class DashboardView extends ConsumerWidget {
                   )
                 : ListView.separated(
                     itemCount: recentInvoices.length,
-                    separatorBuilder: (_, __) => const Divider(height: 1),
+                    separatorBuilder: (_, __) => Divider(height: 1.h),
                     itemBuilder: (context, index) {
                       final inv = recentInvoices[index];
                       final custName = customerMap[inv.customerId] ?? 'عميل نقدي';
@@ -669,23 +668,23 @@ class DashboardView extends ConsumerWidget {
                         contentPadding: EdgeInsets.zero,
                         title: Text(
                           '#${inv.invoiceNumber} - $custName',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontFamily: 'Cairo',
                             fontWeight: FontWeight.bold,
-                            fontSize: 13,
+                            fontSize: 13.sp,
                           ),
                         ),
                         subtitle: Text(
                           intl.DateFormat('yyyy/MM/dd HH:mm').format(inv.createdAt),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontFamily: 'Cairo',
-                            fontSize: 11,
+                            fontSize: 11.sp,
                             color: AppColors.textSecondary,
                           ),
                         ),
                         trailing: Text(
                           '${inv.total.toStringAsFixed(2)} ج.م',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontFamily: 'Cairo',
                             fontWeight: FontWeight.bold,
                             color: AppColors.primary,
@@ -700,17 +699,17 @@ class DashboardView extends ConsumerWidget {
     );
   }
 
-  Widget _buildTopProductsCard(
+  Widget _buildTopProductsCard(BuildContext context, 
     String title,
     IconData icon,
     List<Product> topProducts,
   ) {
     return Container(
-      height: 280,
-      padding: const EdgeInsets.all(20),
+      height: 280.h,
+      padding: EdgeInsets.all(20.w),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(12.r),
         border: Border.all(color: AppColors.border),
       ),
       child: Column(
@@ -719,11 +718,11 @@ class DashboardView extends ConsumerWidget {
           Row(
             children: [
               Icon(icon, size: 18, color: AppColors.primary),
-              const SizedBox(width: 8),
+              SizedBox(width: 8.w),
               Text(
                 title,
-                style: const TextStyle(
-                  fontSize: 16,
+                style: TextStyle(
+                  fontSize: 16.sp,
                   fontWeight: FontWeight.w600,
                   color: AppColors.textPrimary,
                   fontFamily: 'Cairo',
@@ -731,10 +730,10 @@ class DashboardView extends ConsumerWidget {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16.h),
           Expanded(
             child: topProducts.isEmpty
-                ? const Center(
+                ? Center(
                     child: Text(
                       'لا توجد منتجات بعد',
                       style: TextStyle(
@@ -745,7 +744,7 @@ class DashboardView extends ConsumerWidget {
                   )
                 : ListView.separated(
                     itemCount: topProducts.length,
-                    separatorBuilder: (_, __) => const Divider(height: 1),
+                    separatorBuilder: (_, __) => Divider(height: 1.h),
                     itemBuilder: (context, index) {
                       final p = topProducts[index];
                       return ListTile(
@@ -756,8 +755,8 @@ class DashboardView extends ConsumerWidget {
                           backgroundColor: AppColors.primaryLight.withValues(alpha: 0.2),
                           child: Text(
                             '${index + 1}',
-                            style: const TextStyle(
-                              fontSize: 11,
+                            style: TextStyle(
+                              fontSize: 11.sp,
                               fontWeight: FontWeight.bold,
                               color: AppColors.primary,
                             ),
@@ -765,23 +764,23 @@ class DashboardView extends ConsumerWidget {
                         ),
                         title: Text(
                           p.nameAr,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontFamily: 'Cairo',
                             fontWeight: FontWeight.bold,
-                            fontSize: 13,
+                            fontSize: 13.sp,
                           ),
                         ),
                         subtitle: Text(
                           'المخزون الحالي: ${p.currentQuantity}',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontFamily: 'Cairo',
-                            fontSize: 11,
+                            fontSize: 11.sp,
                             color: AppColors.textSecondary,
                           ),
                         ),
                         trailing: Text(
                           '${p.wholesalePrice} ج.م (جملة)',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontFamily: 'Cairo',
                             fontWeight: FontWeight.bold,
                             color: AppColors.success,

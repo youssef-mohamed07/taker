@@ -65,3 +65,30 @@ class SuspendedInvoices extends Table {
   TextColumn get notes => text().nullable()();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 }
+
+
+/// Sales Returns
+class SalesReturns extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get returnNumber => text().unique()();
+  IntColumn get invoiceId => integer().nullable().references(Invoices, #id)();
+  IntColumn get customerId => integer().nullable().references(Customers, #id)();
+  IntColumn get userId => integer().references(Users, #id)();
+  IntColumn get shiftId => integer().nullable()();
+  RealColumn get subtotal => real().withDefault(const Constant(0))();
+  RealColumn get tax => real().withDefault(const Constant(0))();
+  RealColumn get total => real().withDefault(const Constant(0))();
+  TextColumn get paymentMethod => text().withDefault(const Constant('cash'))();
+  TextColumn get notes => text().nullable()();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+}
+
+/// Sales Return Items
+class SalesReturnItems extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get returnId => integer().references(SalesReturns, #id)();
+  IntColumn get productId => integer().references(Products, #id)();
+  RealColumn get quantity => real()();
+  RealColumn get unitPrice => real()();
+  RealColumn get total => real()();
+}

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
@@ -77,7 +78,7 @@ class _ProductFormViewState extends ConsumerState<ProductFormView> {
           SnackBar(
             content: Text(
               'حدث خطأ أثناء الحفظ: $e',
-              style: const TextStyle(fontFamily: 'Cairo'),
+              style: TextStyle(fontFamily: 'Cairo'),
             ),
           ),
         );
@@ -94,24 +95,24 @@ class _ProductFormViewState extends ConsumerState<ProductFormView> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'إضافة صنف جديد',
           style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold),
         ),
         leading: IconButton(
-          icon: const Icon(LucideIcons.arrowRight),
+          icon: Icon(LucideIcons.arrowRight),
           onPressed: () => context.pop(),
         ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
+        padding: EdgeInsets.all(24.w),
         child: Center(
           child: Container(
             constraints: const BoxConstraints(maxWidth: 700),
-            padding: const EdgeInsets.all(32),
+            padding: EdgeInsets.all(32.w),
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(16.r),
               border: Border.all(color: AppColors.border),
             ),
             child: Form(
@@ -119,15 +120,15 @@ class _ProductFormViewState extends ConsumerState<ProductFormView> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'بيانات الصنف',
                     style: TextStyle(
-                      fontSize: 20,
+                      fontSize: 20.sp,
                       fontWeight: FontWeight.bold,
                       fontFamily: 'Cairo',
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  SizedBox(height: 24.h),
                   Row(
                     children: [
                       Expanded(
@@ -143,7 +144,7 @@ class _ProductFormViewState extends ConsumerState<ProductFormView> {
                               : null,
                         ),
                       ),
-                      const SizedBox(width: 16),
+                      SizedBox(width: 16.w),
                       Expanded(
                         flex: 1,
                         child: TextFormField(
@@ -157,7 +158,7 @@ class _ProductFormViewState extends ConsumerState<ProductFormView> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16.h),
                   Row(
                     children: [
                       Expanded(
@@ -174,7 +175,7 @@ class _ProductFormViewState extends ConsumerState<ProductFormView> {
                                     value: cat.id,
                                     child: Text(
                                       cat.name,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontFamily: 'Cairo',
                                       ),
                                     ),
@@ -185,10 +186,10 @@ class _ProductFormViewState extends ConsumerState<ProductFormView> {
                                 setState(() => _selectedCategoryId = val),
                           ),
                           loading: () => const CircularProgressIndicator(),
-                          error: (_, __) => const SizedBox(),
+                          error: (_, __) => SizedBox(),
                         ),
                       ),
-                      const SizedBox(width: 16),
+                      SizedBox(width: 16.w),
                       Expanded(
                         child: TextFormField(
                           controller: _unitController,
@@ -201,16 +202,16 @@ class _ProductFormViewState extends ConsumerState<ProductFormView> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 24),
-                  const Text(
+                  SizedBox(height: 24.h),
+                  Text(
                     'الأسعار والكمية',
                     style: TextStyle(
-                      fontSize: 18,
+                      fontSize: 18.sp,
                       fontWeight: FontWeight.bold,
                       fontFamily: 'Cairo',
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16.h),
                   Row(
                     children: [
                       Expanded(
@@ -227,7 +228,7 @@ class _ProductFormViewState extends ConsumerState<ProductFormView> {
                               : null,
                         ),
                       ),
-                      const SizedBox(width: 16),
+                      SizedBox(width: 16.w),
                       Expanded(
                         child: TextFormField(
                           controller: _sellPriceController,
@@ -244,7 +245,7 @@ class _ProductFormViewState extends ConsumerState<ProductFormView> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16.h),
                   Row(
                     children: [
                       Expanded(
@@ -261,7 +262,7 @@ class _ProductFormViewState extends ConsumerState<ProductFormView> {
                               : null,
                         ),
                       ),
-                      const SizedBox(width: 16),
+                      SizedBox(width: 16.w),
                       Expanded(
                         child: TextFormField(
                           controller: _minStockController,
@@ -274,40 +275,40 @@ class _ProductFormViewState extends ConsumerState<ProductFormView> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 32),
+                  SizedBox(height: 32.h),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       OutlinedButton(
                         onPressed: () => context.pop(),
-                        child: const Text(
+                        child: Text(
                           'إلغاء',
                           style: TextStyle(fontFamily: 'Cairo'),
                         ),
                       ),
-                      const SizedBox(width: 16),
+                      SizedBox(width: 16.w),
                       ElevatedButton.icon(
                         onPressed: _isLoading ? null : _saveProduct,
-                        icon: const Icon(LucideIcons.save, size: 18),
+                        icon: Icon(LucideIcons.save, size: 18),
                         label: _isLoading
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
+                            ? SizedBox(
+                                width: 20.w,
+                                height: 20.h,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
                                 ),
                               )
-                            : const Text(
+                            : Text(
                                 'حفظ الصنف',
                                 style: TextStyle(
                                   fontFamily: 'Cairo',
-                                  fontSize: 16,
+                                  fontSize: 16.sp,
                                 ),
                               ),
                         style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 24,
-                            vertical: 14,
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 24.w,
+                            vertical: 14.h,
                           ),
                         ),
                       ),

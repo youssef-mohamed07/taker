@@ -36,13 +36,18 @@ part 'app_database.g.dart';
     PartnerProfits,
     AuditLog,
     AppSettings,
+    SalesReturns,
+    SalesReturnItems,
+    PurchaseReturns,
+    PurchaseReturnItems,
+    ProductBatches,
   ],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration {
@@ -66,6 +71,25 @@ class AppDatabase extends _$AppDatabase {
           try {
             await m.createTable(shifts);
           } catch (_) {}
+        }
+        if (from < 3) {
+          try {
+            await m.addColumn(shifts, shifts.companionNames);
+          } catch (_) {}
+        }
+        if (from < 4) {
+          try {
+            await m.createTable(salesReturns);
+            await m.createTable(salesReturnItems);
+            await m.createTable(purchaseReturns);
+            await m.createTable(purchaseReturnItems);
+          } catch (_) {}
+        }
+        if (from < 5) {
+          try {
+            await m.createTable(productBatches);
+          } catch (_) {}
+
         }
       },
       beforeOpen: (details) async {

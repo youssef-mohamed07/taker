@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'app_colors.dart';
 
 /// Tager App Theme - Material 3 based
@@ -15,7 +16,7 @@ class AppTheme {
       useMaterial3: true,
       brightness: Brightness.light,
       fontFamily: 'Cairo',
-      colorScheme: const ColorScheme.light(
+      colorScheme: ColorScheme.light(
         primary: AppColors.primary,
         primaryContainer: AppColors.primarySurface,
         secondary: AppColors.primaryLight,
@@ -32,11 +33,11 @@ class AppTheme {
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(borderRadius),
-          side: const BorderSide(color: AppColors.border, width: 1),
+          side: BorderSide(color: AppColors.border, width: 1.w),
         ),
         margin: EdgeInsets.zero,
       ),
-      appBarTheme: const AppBarTheme(
+      appBarTheme: AppBarTheme(
         backgroundColor: AppColors.surface,
         foregroundColor: AppColors.textPrimary,
         elevation: 0,
@@ -44,7 +45,7 @@ class AppTheme {
         centerTitle: false,
         titleTextStyle: TextStyle(
           fontFamily: 'Cairo',
-          fontSize: 20,
+          fontSize: 20.sp,
           fontWeight: FontWeight.w700,
           color: AppColors.textPrimary,
         ),
@@ -52,30 +53,30 @@ class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: AppColors.surfaceVariant,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 14,
+        contentPadding: EdgeInsets.symmetric(
+          horizontal: 16.w,
+          vertical: 14.h,
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(borderRadiusSm),
-          borderSide: const BorderSide(color: AppColors.border),
+          borderSide: BorderSide(color: AppColors.border),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(borderRadiusSm),
-          borderSide: const BorderSide(color: AppColors.border),
+          borderSide: BorderSide(color: AppColors.border),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(borderRadiusSm),
-          borderSide: const BorderSide(color: AppColors.primary, width: 2),
+          borderSide: BorderSide(color: AppColors.primary, width: 2.w),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(borderRadiusSm),
-          borderSide: const BorderSide(color: AppColors.error),
+          borderSide: BorderSide(color: AppColors.error),
         ),
-        hintStyle: const TextStyle(color: AppColors.textTertiary, fontSize: 14),
-        labelStyle: const TextStyle(
+        hintStyle: TextStyle(color: AppColors.textTertiary, fontSize: 14.sp),
+        labelStyle: TextStyle(
           color: AppColors.textSecondary,
-          fontSize: 14,
+          fontSize: 14.sp,
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
@@ -83,13 +84,13 @@ class AppTheme {
           backgroundColor: AppColors.primary,
           foregroundColor: AppColors.textOnPrimary,
           elevation: 0,
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+          padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 14.h),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(borderRadiusSm),
           ),
-          textStyle: const TextStyle(
+          textStyle: TextStyle(
             fontFamily: 'Cairo',
-            fontSize: 14,
+            fontSize: 14.sp,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -98,14 +99,14 @@ class AppTheme {
         style: OutlinedButton.styleFrom(
           foregroundColor: AppColors.primary,
           elevation: 0,
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-          side: const BorderSide(color: AppColors.border),
+          padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 14.h),
+          side: BorderSide(color: AppColors.border),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(borderRadiusSm),
           ),
-          textStyle: const TextStyle(
+          textStyle: TextStyle(
             fontFamily: 'Cairo',
-            fontSize: 14,
+            fontSize: 14.sp,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -113,24 +114,24 @@ class AppTheme {
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: AppColors.primary,
-          textStyle: const TextStyle(
+          textStyle: TextStyle(
             fontFamily: 'Cairo',
-            fontSize: 14,
+            fontSize: 14.sp,
             fontWeight: FontWeight.w600,
           ),
         ),
       ),
       dataTableTheme: DataTableThemeData(
         headingRowColor: WidgetStateProperty.all(AppColors.surfaceVariant),
-        headingTextStyle: const TextStyle(
+        headingTextStyle: TextStyle(
           fontFamily: 'Cairo',
           fontWeight: FontWeight.w600,
-          fontSize: 13,
+          fontSize: 13.sp,
           color: AppColors.textSecondary,
         ),
-        dataTextStyle: const TextStyle(
+        dataTextStyle: TextStyle(
           fontFamily: 'Cairo',
-          fontSize: 13,
+          fontSize: 13.sp,
           color: AppColors.textPrimary,
         ),
         dividerThickness: 1,
@@ -141,14 +142,14 @@ class AppTheme {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(borderRadiusLg),
         ),
-        titleTextStyle: const TextStyle(
+        titleTextStyle: TextStyle(
           fontFamily: 'Cairo',
-          fontSize: 18,
+          fontSize: 18.sp,
           fontWeight: FontWeight.w700,
           color: AppColors.textPrimary,
         ),
       ),
-      dividerTheme: const DividerThemeData(
+      dividerTheme: DividerThemeData(
         color: AppColors.border,
         thickness: 1,
         space: 1,
@@ -156,12 +157,12 @@ class AppTheme {
       tooltipTheme: TooltipThemeData(
         decoration: BoxDecoration(
           color: AppColors.sidebarBg,
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: BorderRadius.circular(6.r),
         ),
-        textStyle: const TextStyle(
+        textStyle: TextStyle(
           fontFamily: 'Cairo',
           color: Colors.white,
-          fontSize: 12,
+          fontSize: 12.sp,
         ),
       ),
       snackBarTheme: SnackBarThemeData(
@@ -179,66 +180,66 @@ class AppTheme {
       useMaterial3: true,
       brightness: Brightness.dark,
       fontFamily: 'Cairo',
-      colorScheme: const ColorScheme.dark(
+      colorScheme: ColorScheme.dark(
         primary: AppColors.primaryLight,
         primaryContainer: AppColors.primaryDark,
         secondary: AppColors.primary,
-        surface: AppColors.darkSurface,
+        surface: AppColors.surface,
         error: AppColors.error,
         onPrimary: AppColors.textOnPrimary,
-        onSurface: AppColors.darkTextPrimary,
+        onSurface: AppColors.textPrimary,
         onError: Colors.white,
-        outline: AppColors.darkBorder,
+        outline: AppColors.border,
       ),
-      scaffoldBackgroundColor: AppColors.darkBackground,
+      scaffoldBackgroundColor: AppColors.background,
       cardTheme: CardThemeData(
-        color: AppColors.darkCardBg,
+        color: AppColors.cardBg,
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(borderRadius),
-          side: const BorderSide(color: AppColors.darkBorder, width: 1),
+          side: BorderSide(color: AppColors.border, width: 1.w),
         ),
         margin: EdgeInsets.zero,
       ),
-      appBarTheme: const AppBarTheme(
-        backgroundColor: AppColors.darkSurface,
-        foregroundColor: AppColors.darkTextPrimary,
+      appBarTheme: AppBarTheme(
+        backgroundColor: AppColors.surface,
+        foregroundColor: AppColors.textPrimary,
         elevation: 0,
         scrolledUnderElevation: 1,
         centerTitle: false,
         titleTextStyle: TextStyle(
           fontFamily: 'Cairo',
-          fontSize: 20,
+          fontSize: 20.sp,
           fontWeight: FontWeight.w700,
-          color: AppColors.darkTextPrimary,
+          color: AppColors.textPrimary,
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: AppColors.darkSurfaceVariant,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 14,
+        fillColor: AppColors.surfaceVariant,
+        contentPadding: EdgeInsets.symmetric(
+          horizontal: 16.w,
+          vertical: 14.h,
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(borderRadiusSm),
-          borderSide: const BorderSide(color: AppColors.darkBorder),
+          borderSide: BorderSide(color: AppColors.border),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(borderRadiusSm),
-          borderSide: const BorderSide(color: AppColors.darkBorder),
+          borderSide: BorderSide(color: AppColors.border),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(borderRadiusSm),
-          borderSide: const BorderSide(color: AppColors.primaryLight, width: 2),
+          borderSide: BorderSide(color: AppColors.primaryLight, width: 2.w),
         ),
-        hintStyle: const TextStyle(
-          color: AppColors.darkTextSecondary,
-          fontSize: 14,
+        hintStyle: TextStyle(
+          color: AppColors.textSecondary,
+          fontSize: 14.sp,
         ),
       ),
-      dividerTheme: const DividerThemeData(
-        color: AppColors.darkBorder,
+      dividerTheme: DividerThemeData(
+        color: AppColors.border,
         thickness: 1,
         space: 1,
       ),

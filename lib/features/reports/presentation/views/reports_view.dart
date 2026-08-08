@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -82,29 +83,29 @@ class ReportsView extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: EdgeInsets.all(24.w),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'التقارير التحليلية والإحصاءات',
               style: TextStyle(
-                fontSize: 24,
+                fontSize: 24.sp,
                 fontWeight: FontWeight.w700,
                 color: AppColors.textPrimary,
                 fontFamily: 'Cairo',
               ),
             ),
-            const SizedBox(height: 4),
-            const Text(
+            SizedBox(height: 4.h),
+            Text(
               'استعراض وقراءة كشوفات وتقارير المبيعات، المخزون، والأرباح مباشرة من قاعدة البيانات',
               style: TextStyle(
-                fontSize: 14,
+                fontSize: 14.sp,
                 color: AppColors.textSecondary,
                 fontFamily: 'Cairo',
               ),
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: 24.h),
             Expanded(
               child: GridView.builder(
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -126,47 +127,47 @@ class ReportsView extends ConsumerWidget {
                             title: Row(
                               children: [
                                 Icon(r.icon, color: r.color),
-                                const SizedBox(width: 8),
-                                Text(r.title, style: const TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold)),
+                                SizedBox(width: 8.w),
+                                Text(r.title, style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold)),
                               ],
                             ),
                             content: SizedBox(
-                              width: 450,
+                              width: 450.w,
                               child: Text(
                                 r.details,
-                                style: const TextStyle(fontFamily: 'Cairo', fontSize: 14, height: 1.8),
+                                style: TextStyle(fontFamily: 'Cairo', fontSize: 14.sp, height: 1.8.h),
                               ),
                             ),
                             actions: [
                               ElevatedButton(
                                 style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
                                 onPressed: () => Navigator.pop(c),
-                                child: const Text('إغلاق', style: TextStyle(fontFamily: 'Cairo', color: Colors.white)),
+                                child: Text('إغلاق', style: TextStyle(fontFamily: 'Cairo', color: Colors.white)),
                               ),
                             ],
                           ),
                         ),
                       );
                     },
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(12.r),
                     child: Container(
-                      padding: const EdgeInsets.all(16),
+                      padding: EdgeInsets.all(16.w),
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(12.r),
                         border: Border.all(color: AppColors.border),
                       ),
                       child: Row(
                         children: [
                           Container(
-                            padding: const EdgeInsets.all(12),
+                            padding: EdgeInsets.all(12.w),
                             decoration: BoxDecoration(
                               color: r.color.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(10.r),
                             ),
                             child: Icon(r.icon, color: r.color, size: 24),
                           ),
-                          const SizedBox(width: 12),
+                          SizedBox(width: 12.w),
                           Expanded(
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
@@ -174,17 +175,17 @@ class ReportsView extends ConsumerWidget {
                               children: [
                                 Text(
                                   r.title,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontFamily: 'Cairo',
-                                    fontSize: 14,
+                                    fontSize: 14.sp,
                                   ),
                                 ),
-                                const SizedBox(height: 4),
-                                const Text(
+                                SizedBox(height: 4.h),
+                                Text(
                                   'انقر لعرض تفاصيل التقرير الحي',
                                   style: TextStyle(
-                                    fontSize: 11,
+                                    fontSize: 11.sp,
                                     color: AppColors.textSecondary,
                                     fontFamily: 'Cairo',
                                   ),
@@ -192,7 +193,7 @@ class ReportsView extends ConsumerWidget {
                               ],
                             ),
                           ),
-                          const Icon(
+                          Icon(
                             LucideIcons.chevronLeft,
                             size: 18,
                             color: AppColors.textTertiary,

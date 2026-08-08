@@ -1,3 +1,4 @@
+import 'package:drift/drift.dart' as drift;
 import 'package:drift/drift.dart';
 import 'app_database.dart';
 
@@ -20,10 +21,12 @@ class PurchaseCartItem {
   final Product product;
   final double quantity;
   final double purchasePrice;
+  
   PurchaseCartItem({
     required this.product,
     required this.quantity,
     required this.purchasePrice,
+    
   });
 
   double get total => purchasePrice * quantity;
@@ -344,19 +347,75 @@ class DbHelpers {
           );
 
       for (final item in items) {
-        await db
-            .into(db.invoiceItems)
-            .insert(
+        // FIFO Batch Deduction Logic
+        double remainingQtyToDeduct = item.quantity;
+        
+        // Fetch batches for this product ordered by expiry date (oldest first)
+        final batches = await (db.select(db.productBatches)
+              ..where((t) => t.productId.equals(item.product.id))
+              ..where((t) => t.quantity.isBiggerThanValue(0))
+              ..orderBy([(t) => OrderingTerm.asc(t.expiryDate)]))
+            .get();
+
+        if (batches.isEmpty) {
+          // No batches found (e.g. old stock), insert normally
+          await db.into(db.invoiceItems).insert(
+            InvoiceItemsCompanion.insert(
+              invoiceId: invoiceId,
+              productId: item.product.id,
+              quantity: item.quantity,
+              unitPrice: item.unitPrice,
+              discount: Value(item.discount),
+              total: item.total,
+              costPrice: Value(item.product.purchasePrice),
+            ),
+          );
+        } else {
+          for (final batch in batches) {
+            if (remainingQtyToDeduct <= 0) break;
+            
+            final qtyFromBatch = batch.quantity >= remainingQtyToDeduct 
+                ? remainingQtyToDeduct 
+                : batch.quantity;
+            
+            // Deduct from batch
+            await (db.update(db.productBatches)..where((t) => t.id.equals(batch.id)))
+                .write(ProductBatchesCompanion(quantity: Value(batch.quantity - qtyFromBatch)));
+                
+            // Insert invoice item for this specific batch chunk
+            final chunkTotal = (item.unitPrice * qtyFromBatch) - (item.discount * (qtyFromBatch / item.quantity));
+            await db.into(db.invoiceItems).insert(
               InvoiceItemsCompanion.insert(
                 invoiceId: invoiceId,
                 productId: item.product.id,
-                quantity: item.quantity,
+                quantity: qtyFromBatch,
                 unitPrice: item.unitPrice,
-                discount: Value(item.discount),
-                total: item.total,
+                discount: Value(item.discount * (qtyFromBatch / item.quantity)),
+                total: chunkTotal,
+                costPrice: Value(item.product.purchasePrice),
+                
+              ),
+            );
+            
+            remainingQtyToDeduct -= qtyFromBatch;
+          }
+          
+          // If there's still quantity remaining but all batches are exhausted
+          if (remainingQtyToDeduct > 0) {
+            final chunkTotal = (item.unitPrice * remainingQtyToDeduct) - (item.discount * (remainingQtyToDeduct / item.quantity));
+            await db.into(db.invoiceItems).insert(
+              InvoiceItemsCompanion.insert(
+                invoiceId: invoiceId,
+                productId: item.product.id,
+                quantity: remainingQtyToDeduct,
+                unitPrice: item.unitPrice,
+                discount: Value(item.discount * (remainingQtyToDeduct / item.quantity)),
+                total: chunkTotal,
                 costPrice: Value(item.product.purchasePrice),
               ),
             );
+          }
+        }
 
         final newQty = item.product.currentQuantity - item.quantity;
         await (db.update(db.products)
@@ -470,8 +529,11 @@ class DbHelpers {
                 quantity: item.quantity,
                 unitPrice: item.purchasePrice,
                 total: item.total,
+                
               ),
             );
+
+        
 
         final newQty = item.product.currentQuantity + item.quantity;
         await (db.update(
@@ -646,6 +708,7 @@ class DbHelpers {
     required double openingBalance,
     required int userId,
     String? notes,
+    String? companionNames,
   }) async {
     return db.transaction(() async {
       final active = await getActiveShift(db);
@@ -666,6 +729,7 @@ class DbHelpers {
               openingBalance: Value(openingBalance),
               status: const Value('open'),
               notes: Value(notes),
+              companionNames: Value(companionNames),
             ),
           );
     });
@@ -750,7 +814,396 @@ class DbHelpers {
       await db.update(db.treasury).write(const TreasuryCompanion(currentBalance: Value(0.0)));
     });
   }
+
+  // ---------------------------------------------------------------------------
+  // Customer & Supplier Debts
+  // ---------------------------------------------------------------------------
+
+  static Future<void> receiveCustomerPayment(
+    AppDatabase db, {
+    required int customerId,
+    required double amount,
+    required int userId,
+    String? notes,
+  }) async {
+    await db.transaction(() async {
+      // 1. Get Customer
+      final customer = await (db.select(db.customers)..where((t) => t.id.equals(customerId))).getSingle();
+      
+      // 2. Reduce Customer Balance (Balance means what they owe us)
+      final newBalance = customer.balance - amount;
+      await (db.update(db.customers)..where((t) => t.id.equals(customerId)))
+          .write(CustomersCompanion(balance: Value(newBalance)));
+          
+      // 3. Add to Treasury
+      final treasuries = await db.select(db.treasury).get();
+      if (treasuries.isNotEmpty) {
+        final mainTreasury = treasuries.first;
+        final newTreasuryBalance = mainTreasury.currentBalance + amount;
+        await (db.update(db.treasury)..where((t) => t.id.equals(mainTreasury.id)))
+            .write(TreasuryCompanion(currentBalance: Value(newTreasuryBalance)));
+            
+        // 4. Log Transaction
+        final activeShift = await getActiveShift(db);
+        await db.into(db.treasuryTransactions).insert(
+          TreasuryTransactionsCompanion.insert(
+            treasuryId: mainTreasury.id,
+            shiftId: Value(activeShift?.id),
+            type: 'INCOME',
+            amount: amount,
+            description: Value(notes ?? 'تحصيل مديونية من العميل: ${customer.name}'),
+            referenceType: const Value('customer_payment'),
+            referenceId: Value(customerId),
+            userId: userId,
+          )
+        );
+      }
+    });
+  }
+
+  static Future<void> paySupplierDebt(
+    AppDatabase db, {
+    required int supplierId,
+    required double amount,
+    required int userId,
+    String? notes,
+  }) async {
+    await db.transaction(() async {
+      // 1. Get Supplier
+      final supplier = await (db.select(db.suppliers)..where((t) => t.id.equals(supplierId))).getSingle();
+      
+      // 2. Reduce Supplier Balance (Balance means what we owe them)
+      final newBalance = supplier.balance - amount;
+      await (db.update(db.suppliers)..where((t) => t.id.equals(supplierId)))
+          .write(SuppliersCompanion(balance: Value(newBalance)));
+          
+      // 3. Deduct from Treasury
+      final treasuries = await db.select(db.treasury).get();
+      if (treasuries.isNotEmpty) {
+        final mainTreasury = treasuries.first;
+        final newTreasuryBalance = mainTreasury.currentBalance - amount;
+        await (db.update(db.treasury)..where((t) => t.id.equals(mainTreasury.id)))
+            .write(TreasuryCompanion(currentBalance: Value(newTreasuryBalance)));
+            
+        // 4. Log Transaction
+        final activeShift = await getActiveShift(db);
+        await db.into(db.treasuryTransactions).insert(
+          TreasuryTransactionsCompanion.insert(
+            treasuryId: mainTreasury.id,
+            shiftId: Value(activeShift?.id),
+            type: 'EXPENSE',
+            amount: amount,
+            description: Value(notes ?? 'سداد مديونية للمورد: ${supplier.name}'),
+            referenceType: const Value('supplier_payment'),
+            referenceId: Value(supplierId),
+            userId: userId,
+          )
+        );
+      }
+    });
+  }
+
+  // ---------------------------------------------------------------------------
+  // Returns
+  // ---------------------------------------------------------------------------
+
+  static Future<void> processSalesReturn(
+    AppDatabase db, {
+    required int? invoiceId,
+    required int? customerId,
+    required double totalAmount,
+    required String paymentMethod,
+    required List<SalesReturnItemsCompanion> items,
+    required int userId,
+    String? notes,
+  }) async {
+    await db.transaction(() async {
+      // 1. Create Return record
+      final returnNumber = 'SR-${DateTime.now().millisecondsSinceEpoch}';
+      final activeShift = await getActiveShift(db);
+      
+      final returnId = await db.into(db.salesReturns).insert(
+        SalesReturnsCompanion.insert(
+          returnNumber: returnNumber,
+          invoiceId: Value(invoiceId),
+          customerId: Value(customerId),
+          userId: userId,
+          shiftId: Value(activeShift?.id),
+          total: drift.Value(totalAmount),
+          paymentMethod: drift.Value(paymentMethod),
+          notes: Value(notes),
+        )
+      );
+
+      // 2. Process Items (Increase Stock)
+      for (final item in items) {
+        await db.into(db.salesReturnItems).insert(
+          item.copyWith(returnId: Value(returnId))
+        );
+        
+        final productId = item.productId.value;
+        final qty = item.quantity.value;
+        
+        final prod = await (db.select(db.products)..where((t) => t.id.equals(productId))).getSingle();
+        await (db.update(db.products)..where((t) => t.id.equals(productId)))
+            .write(ProductsCompanion(currentQuantity: Value(prod.currentQuantity + qty)));
+            
+        await db.into(db.stockMovements).insert(
+          StockMovementsCompanion.insert(
+            productId: productId,
+            movementType: 'IN',
+            quantity: qty,
+            userId: userId,
+            notes: Value('مرتجع مبيعات رقم $returnNumber'),
+          )
+        );
+      }
+
+      // 3. Financials
+      if (paymentMethod == 'cash') {
+        final treasuries = await db.select(db.treasury).get();
+        if (treasuries.isNotEmpty) {
+          final mainTreasury = treasuries.first;
+          await (db.update(db.treasury)..where((t) => t.id.equals(mainTreasury.id)))
+              .write(TreasuryCompanion(currentBalance: Value(mainTreasury.currentBalance - totalAmount)));
+              
+          await db.into(db.treasuryTransactions).insert(
+            TreasuryTransactionsCompanion.insert(
+              treasuryId: mainTreasury.id,
+              shiftId: Value(activeShift?.id),
+              type: 'EXPENSE',
+              amount: totalAmount,
+              description: Value('رد نقدي لمرتجع مبيعات $returnNumber'),
+              referenceType: const Value('sales_return'),
+              referenceId: Value(returnId),
+              userId: userId,
+            )
+          );
+        }
+      } else if (paymentMethod == 'credit' && customerId != null) {
+        final customer = await (db.select(db.customers)..where((t) => t.id.equals(customerId))).getSingle();
+        await (db.update(db.customers)..where((t) => t.id.equals(customerId)))
+            .write(CustomersCompanion(balance: Value(customer.balance - totalAmount)));
+      }
+    });
+  }
+
+  static Future<void> processPurchaseReturn(
+    AppDatabase db, {
+    required int? invoiceId,
+    required int? supplierId,
+    required double totalAmount,
+    required String paymentMethod,
+    required List<PurchaseReturnItemsCompanion> items,
+    required int userId,
+    String? notes,
+  }) async {
+    await db.transaction(() async {
+      // 1. Create Return record
+      final returnNumber = 'PR-${DateTime.now().millisecondsSinceEpoch}';
+      final activeShift = await getActiveShift(db);
+      
+      final returnId = await db.into(db.purchaseReturns).insert(
+        PurchaseReturnsCompanion.insert(
+          returnNumber: returnNumber,
+          invoiceId: Value(invoiceId),
+          supplierId: Value(supplierId),
+          userId: userId,
+          shiftId: Value(activeShift?.id),
+          total: drift.Value(totalAmount),
+          paymentMethod: drift.Value(paymentMethod),
+          notes: Value(notes),
+        )
+      );
+
+      // 2. Process Items (Decrease Stock)
+      for (final item in items) {
+        await db.into(db.purchaseReturnItems).insert(
+          item.copyWith(returnId: Value(returnId))
+        );
+        
+        final productId = item.productId.value;
+        final qty = item.quantity.value;
+        
+        final prod = await (db.select(db.products)..where((t) => t.id.equals(productId))).getSingle();
+        await (db.update(db.products)..where((t) => t.id.equals(productId)))
+            .write(ProductsCompanion(currentQuantity: Value(prod.currentQuantity - qty)));
+            
+        await db.into(db.stockMovements).insert(
+          StockMovementsCompanion.insert(
+            productId: productId,
+            movementType: 'OUT',
+            quantity: qty,
+            userId: userId,
+            notes: Value('مرتجع مشتريات رقم $returnNumber'),
+          )
+        );
+      }
+
+      // 3. Financials
+      if (paymentMethod == 'cash') {
+        final treasuries = await db.select(db.treasury).get();
+        if (treasuries.isNotEmpty) {
+          final mainTreasury = treasuries.first;
+          await (db.update(db.treasury)..where((t) => t.id.equals(mainTreasury.id)))
+              .write(TreasuryCompanion(currentBalance: Value(mainTreasury.currentBalance + totalAmount)));
+              
+          await db.into(db.treasuryTransactions).insert(
+            TreasuryTransactionsCompanion.insert(
+              treasuryId: mainTreasury.id,
+              shiftId: Value(activeShift?.id),
+              type: 'INCOME',
+              amount: totalAmount,
+              description: Value('استرداد نقدي لمرتجع مشتريات $returnNumber'),
+              referenceType: const Value('purchase_return'),
+              referenceId: Value(returnId),
+              userId: userId,
+            )
+          );
+        }
+      } else if (paymentMethod == 'credit' && supplierId != null) {
+        final supplier = await (db.select(db.suppliers)..where((t) => t.id.equals(supplierId))).getSingle();
+        await (db.update(db.suppliers)..where((t) => t.id.equals(supplierId)))
+            .write(SuppliersCompanion(balance: Value(supplier.balance - totalAmount)));
+      }
+    });
+  }
+
+  static Future<void> voidPurchaseInvoice(AppDatabase db, int invoiceId) async {
+    return db.transaction(() async {
+      // 1. Get the invoice
+      final invoice = await (db.select(db.purchaseInvoices)..where((t) => t.id.equals(invoiceId))).getSingleOrNull();
+      if (invoice == null || invoice.status == 'voided') return;
+
+      // 2. Mark as voided
+      await (db.update(db.purchaseInvoices)..where((t) => t.id.equals(invoiceId)))
+          .write(PurchaseInvoicesCompanion(status: const Value('voided')));
+
+      // 3. Reverse stock movements and quantities
+      final items = await (db.select(db.purchaseItems)..where((t) => t.purchaseInvoiceId.equals(invoiceId))).get();
+      for (final item in items) {
+        // Remove quantity from product
+        final product = await (db.select(db.products)..where((t) => t.id.equals(item.productId))).getSingle();
+        await (db.update(db.products)..where((t) => t.id.equals(product.id)))
+            .write(ProductsCompanion(currentQuantity: Value(product.currentQuantity - item.quantity)));
+
+        // If batch system used, we should ideally void the batch, but for now we adjust stock.
+        
+        // Log stock movement
+        await db.into(db.stockMovements).insert(
+          StockMovementsCompanion.insert(
+            productId: product.id,
+            movementType: 'OUT',
+            quantity: item.quantity,
+            referenceType: const Value('void_purchase_invoice'),
+            referenceId: Value(invoiceId),
+            userId: invoice.userId,
+            notes: Value('إلغاء فاتورة مشتريات #${invoice.invoiceNumber}'),
+          ),
+        );
+      }
+
+      // 4. Reverse treasury if paid (refund the money paid to supplier)
+      if (invoice.paid > 0) {
+        final treasuries = await db.select(db.treasury).get();
+        if (treasuries.isNotEmpty) {
+          final mainTreasury = treasuries.first;
+          await (db.update(db.treasury)..where((t) => t.id.equals(mainTreasury.id)))
+              .write(TreasuryCompanion(currentBalance: Value(mainTreasury.currentBalance + invoice.paid)));
+
+          await db.into(db.treasuryTransactions).insert(
+            TreasuryTransactionsCompanion.insert(
+              treasuryId: mainTreasury.id,
+              shiftId: Value(invoice.shiftId),
+              type: 'INCOME', // refund
+              amount: invoice.paid,
+              description: Value('استرداد نقدية لإلغاء فاتورة مشتريات #${invoice.invoiceNumber}'),
+              referenceType: const Value('void_purchase_invoice'),
+              referenceId: Value(invoiceId),
+              userId: invoice.userId,
+            ),
+          );
+        }
+      }
+
+      // 5. Reverse supplier balance if credit
+      if (invoice.supplierId != null && invoice.remaining > 0) {
+        final supplier = await (db.select(db.suppliers)..where((t) => t.id.equals(invoice.supplierId!))).getSingleOrNull();
+        if (supplier != null) {
+          await (db.update(db.suppliers)..where((t) => t.id.equals(supplier.id)))
+              .write(SuppliersCompanion(balance: Value(supplier.balance - invoice.remaining)));
+        }
+      }
+    });
+  }
+
+  static Future<void> voidSalesInvoice(AppDatabase db, int invoiceId) async {
+    return db.transaction(() async {
+      // 1. Get the invoice
+      final invoice = await (db.select(db.invoices)..where((t) => t.id.equals(invoiceId))).getSingleOrNull();
+      if (invoice == null || invoice.status == 'voided') return;
+
+      // 2. Mark as voided
+      await (db.update(db.invoices)..where((t) => t.id.equals(invoiceId)))
+          .write(InvoicesCompanion(status: const Value('voided')));
+
+      // 3. Reverse stock movements and quantities
+      final items = await (db.select(db.invoiceItems)..where((t) => t.invoiceId.equals(invoiceId))).get();
+      for (final item in items) {
+        // Add quantity back to product
+        final product = await (db.select(db.products)..where((t) => t.id.equals(item.productId))).getSingle();
+        await (db.update(db.products)..where((t) => t.id.equals(product.id)))
+            .write(ProductsCompanion(currentQuantity: Value(product.currentQuantity + item.quantity)));
+
+        // If batch system used, add back to batch or create a new returned batch
+        
+
+        // Log stock movement
+        await db.into(db.stockMovements).insert(
+          StockMovementsCompanion.insert(
+            productId: product.id,
+            movementType: 'IN',
+            quantity: item.quantity,
+            referenceType: const Value('void_sales_invoice'),
+            referenceId: Value(invoiceId),
+            userId: invoice.userId,
+            notes: Value('إلغاء فاتورة مبيعات #${invoice.invoiceNumber}'),
+          ),
+        );
+      }
+
+      // 4. Reverse treasury if paid
+      if (invoice.paid > 0) {
+        final treasuries = await db.select(db.treasury).get();
+        if (treasuries.isNotEmpty) {
+          final mainTreasury = treasuries.first;
+          await (db.update(db.treasury)..where((t) => t.id.equals(mainTreasury.id)))
+              .write(TreasuryCompanion(currentBalance: Value(mainTreasury.currentBalance - invoice.paid)));
+
+          await db.into(db.treasuryTransactions).insert(
+            TreasuryTransactionsCompanion.insert(
+              treasuryId: mainTreasury.id,
+              shiftId: Value(invoice.shiftId),
+              type: 'EXPENSE',
+              amount: invoice.paid,
+              description: Value('استرداد نقدية لإلغاء فاتورة #${invoice.invoiceNumber}'),
+              referenceType: const Value('void_sales_invoice'),
+              referenceId: Value(invoiceId),
+              userId: invoice.userId,
+            ),
+          );
+        }
+      }
+
+      // 5. Reverse customer balance if credit
+      if (invoice.customerId != null && invoice.remaining > 0) {
+        final cust = await (db.select(db.customers)..where((t) => t.id.equals(invoice.customerId!))).getSingleOrNull();
+        if (cust != null) {
+          await (db.update(db.customers)..where((t) => t.id.equals(cust.id)))
+              .write(CustomersCompanion(balance: Value(cust.balance - invoice.remaining)));
+        }
+      }
+    });
+  }
+
 }
-
-
-

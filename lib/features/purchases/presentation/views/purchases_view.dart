@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:intl/intl.dart' as intl;
@@ -7,6 +8,7 @@ import '../../../../core/di/providers.dart';
 import '../../../../core/database/app_database.dart';
 import '../../../../core/database/db_helpers.dart';
 
+import 'new_purchase_invoice_dialog.dart';
 class PurchasesView extends ConsumerStatefulWidget {
   const PurchasesView({super.key});
 
@@ -48,31 +50,31 @@ class _PurchasesViewState extends ConsumerState<PurchasesView> {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: EdgeInsets.all(24.w),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Header
             Row(
               children: [
-                const Expanded(
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         'إدارة المشتريات',
                         style: TextStyle(
-                          fontSize: 24,
+                          fontSize: 24.sp,
                           fontWeight: FontWeight.w700,
                           color: AppColors.textPrimary,
                           fontFamily: 'Cairo',
                         ),
                       ),
-                      SizedBox(height: 4),
+                      SizedBox(height: 4.h),
                       Text(
                         'متابعة وتجهيز فواتير الشراء وحسابات الموردين',
                         style: TextStyle(
-                          fontSize: 14,
+                          fontSize: 14.sp,
                           color: AppColors.textSecondary,
                           fontFamily: 'Cairo',
                         ),
@@ -82,21 +84,21 @@ class _PurchasesViewState extends ConsumerState<PurchasesView> {
                 ),
                 ElevatedButton.icon(
                   onPressed: () => _showNewPurchaseDialog(context, db),
-                  icon: const Icon(LucideIcons.plus, size: 18),
-                  label: const Text(
+                  icon: Icon(LucideIcons.plus, size: 18),
+                  label: Text(
                     'فاتورة شراء جديدة',
                     style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 14.h),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.r)),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: 24.h),
 
             // Metrics Cards
             Row(
@@ -110,7 +112,7 @@ class _PurchasesViewState extends ConsumerState<PurchasesView> {
                     AppColors.primary,
                   ),
                 ),
-                const SizedBox(width: 16),
+                SizedBox(width: 16.w),
                 Expanded(
                   child: _buildMetricCard(
                     'المبلغ المدفوع',
@@ -120,7 +122,7 @@ class _PurchasesViewState extends ConsumerState<PurchasesView> {
                     AppColors.success,
                   ),
                 ),
-                const SizedBox(width: 16),
+                SizedBox(width: 16.w),
                 Expanded(
                   child: _buildMetricCard(
                     'المتبقي / المديونية',
@@ -132,43 +134,44 @@ class _PurchasesViewState extends ConsumerState<PurchasesView> {
                 ),
               ],
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: 24.h),
 
             // Search Bar
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(12.r),
                 border: Border.all(color: AppColors.border),
               ),
               child: TextField(
                 controller: _searchController,
                 onChanged: (_) => setState(() {}),
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   hintText: 'ابحث برقم الفاتورة أو اسم المورد...',
                   prefixIcon: Icon(LucideIcons.search, color: AppColors.textSecondary, size: 20),
                   border: InputBorder.none,
                 ),
               ),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16.h),
 
             // Table of Purchases
             Expanded(
               child: Container(
+                width: double.infinity,
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(12.r),
                   border: Border.all(color: AppColors.border),
                 ),
                 child: filtered.isEmpty
-                    ? const Center(
+                    ? Center(
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(LucideIcons.fileX, size: 48, color: AppColors.textTertiary),
-                            SizedBox(height: 12),
+                            SizedBox(height: 12.h),
                             Text(
                               'لا توجد فواتير شراء متطابقة',
                               style: TextStyle(color: AppColors.textSecondary, fontFamily: 'Cairo'),
@@ -176,73 +179,92 @@ class _PurchasesViewState extends ConsumerState<PurchasesView> {
                           ],
                         ),
                       )
-                    : ListView.separated(
-                        itemCount: filtered.length,
-                        separatorBuilder: (_, __) => const Divider(height: 1),
-                        itemBuilder: (context, index) {
-                          final p = filtered[index];
-                          final sName = supplierMap[p.supplierId] ?? 'مورد غير معروف';
-
-                          return ListTile(
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                            leading: Container(
-                              padding: const EdgeInsets.all(10),
-                              decoration: BoxDecoration(
-                                color: AppColors.primary.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: const Icon(LucideIcons.fileText, color: AppColors.primary, size: 20),
+                    : LayoutBuilder(builder: (context, constraints) => SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: ConstrainedBox(constraints: BoxConstraints(minWidth: constraints.maxWidth), child: SingleChildScrollView(
+                          child: DataTable(
+                            headingTextStyle: TextStyle(
+                              fontFamily: 'Cairo',
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.textPrimary,
+                              fontSize: 14.sp,
                             ),
-                            title: Row(
-                              children: [
-                                Text(
-                                  'فاتورة #${p.invoiceNumber}',
-                                  style: const TextStyle(fontWeight: FontWeight.bold, fontFamily: 'Cairo'),
-                                ),
-                                const SizedBox(width: 12),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                  decoration: BoxDecoration(
-                                    color: p.remaining <= 0 ? AppColors.successLight : AppColors.warningLight,
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                  child: Text(
-                                    p.remaining <= 0 ? 'مكفولة / مدفوعة' : 'آجل / متبقي',
-                                    style: TextStyle(
-                                      color: p.remaining <= 0 ? AppColors.success : AppColors.warning,
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.bold,
-                                      fontFamily: 'Cairo',
+                            dataTextStyle: TextStyle(
+                              fontFamily: 'Cairo',
+                              color: AppColors.textPrimary,
+                              fontSize: 14.sp,
+                            ),
+                            columnSpacing: 60.w,
+                            horizontalMargin: 24.w,
+                            dividerThickness: 1.h,
+                            showBottomBorder: true,
+                            columns: const [
+                              DataColumn(label: Text('رقم الفاتورة')),
+                              DataColumn(label: Text('المورد')),
+                              DataColumn(label: Text('التاريخ')),
+                              DataColumn(label: Text('الإجمالي / المدفوع / المتبقي')),
+                              DataColumn(label: Text('الحالة')),
+                            ],
+                            rows: filtered.map((p) {
+                              final sName = supplierMap[p.supplierId] ?? 'مورد غير معروف';
+
+                              return DataRow(
+                                cells: [
+                                  DataCell(
+                                    Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Container(
+                                          padding: EdgeInsets.all(8.w),
+                                          decoration: BoxDecoration(
+                                            color: AppColors.primary.withValues(alpha: 0.1),
+                                            borderRadius: BorderRadius.circular(8.r),
+                                          ),
+                                          child: Icon(LucideIcons.fileText, color: AppColors.primary, size: 16),
+                                        ),
+                                        SizedBox(width: 8.w),
+                                        Text('فاتورة #${p.invoiceNumber}', style: TextStyle(fontWeight: FontWeight.bold)),
+                                      ],
                                     ),
                                   ),
-                                ),
-                              ],
-                            ),
-                            subtitle: Text(
-                              'المورد: $sName | التاريخ: ${intl.DateFormat('yyyy/MM/dd HH:mm').format(p.createdAt)}',
-                              style: const TextStyle(color: AppColors.textSecondary, fontFamily: 'Cairo', fontSize: 12),
-                            ),
-                            trailing: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                Text(
-                                  '${p.total.toStringAsFixed(2)} ج.م',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 15,
-                                    color: AppColors.textPrimary,
+                                  DataCell(Text(sName, style: TextStyle(fontWeight: FontWeight.bold))),
+                                  DataCell(Text(intl.DateFormat('yyyy/MM/dd HH:mm').format(p.createdAt), style: TextStyle(color: AppColors.textSecondary))),
+                                  DataCell(
+                                    Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text('${p.total.toStringAsFixed(2)} ج.م', style: TextStyle(fontWeight: FontWeight.bold)),
+                                        Text(
+                                          'المدفوع: ${p.paid.toStringAsFixed(2)} | المتبقي: ${p.remaining.toStringAsFixed(2)}',
+                                          style: TextStyle(fontSize: 11.sp, color: AppColors.textSecondary),
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                ),
-                                Text(
-                                  'المدفوع: ${p.paid.toStringAsFixed(2)} | المتبقي: ${p.remaining.toStringAsFixed(2)}',
-                                  style: const TextStyle(fontSize: 11, color: AppColors.textSecondary, fontFamily: 'Cairo'),
-                                ),
-                              ],
-                            ),
-                          );
-                        },
-                      ),
+                                  DataCell(
+                                    Container(
+                                      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                                      decoration: BoxDecoration(
+                                        color: p.remaining <= 0 ? AppColors.successLight : AppColors.warningLight,
+                                        borderRadius: BorderRadius.circular(6.r),
+                                      ),
+                                      child: Text(
+                                        p.remaining <= 0 ? 'مكفولة / مدفوعة' : 'آجل / متبقي',
+                                        style: TextStyle(
+                                          color: p.remaining <= 0 ? AppColors.success : AppColors.warning,
+                                          fontSize: 11.sp,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              );
+                            }).toList(),
+                          ),
+                        )),
+                      )),
               ),
             ),
           ],
@@ -259,41 +281,41 @@ class _PurchasesViewState extends ConsumerState<PurchasesView> {
     Color color,
   ) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(20.w),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(12.r),
         border: Border.all(color: AppColors.border),
       ),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: EdgeInsets.all(12.w),
             decoration: BoxDecoration(
               color: color.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(10.r),
             ),
             child: Icon(icon, color: color, size: 24),
           ),
-          const SizedBox(width: 16),
+          SizedBox(width: 16.w),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 title,
-                style: const TextStyle(fontSize: 12, color: AppColors.textSecondary, fontFamily: 'Cairo'),
+                style: TextStyle(fontSize: 12.sp, color: AppColors.textSecondary, fontFamily: 'Cairo'),
               ),
-              const SizedBox(height: 4),
+              SizedBox(height: 4.h),
               Row(
                 children: [
                   Text(
                     value,
-                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                    style: TextStyle(fontSize: 20.sp, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
                   ),
-                  const SizedBox(width: 4),
+                  SizedBox(width: 4.w),
                   Text(
                     unit,
-                    style: const TextStyle(fontSize: 12, color: AppColors.textSecondary, fontFamily: 'Cairo'),
+                    style: TextStyle(fontSize: 12.sp, color: AppColors.textSecondary, fontFamily: 'Cairo'),
                   ),
                 ],
               ),
@@ -305,245 +327,10 @@ class _PurchasesViewState extends ConsumerState<PurchasesView> {
   }
 
   void _showNewPurchaseDialog(BuildContext context, AppDatabase db) {
-    int? selectedSupplierId;
-    final List<PurchaseCartItem> cartItems = [];
-    final paidController = TextEditingController(text: '0');
-
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (dialogCtx) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            final suppliersAsync = ref.read(suppliersStreamProvider);
-            final productsAsync = ref.read(productsStreamProvider);
-
-            final suppliers = suppliersAsync.value ?? [];
-            final products = productsAsync.value ?? [];
-
-            final subtotal = cartItems.fold<double>(0, (sum, i) => sum + i.total);
-            final paid = double.tryParse(paidController.text) ?? 0;
-            final remaining = subtotal - paid;
-
-            return Directionality(
-              textDirection: TextDirection.rtl,
-              child: AlertDialog(
-                title: const Row(
-                  children: [
-                    Icon(LucideIcons.shoppingBag, color: AppColors.primary),
-                    SizedBox(width: 8),
-                    Text('فاتورة شراء جديدة من مورد', style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold)),
-                  ],
-                ),
-                content: SizedBox(
-                  width: 700,
-                  height: 500,
-                  child: Column(
-                    children: [
-                      // Supplier selection
-                      Row(
-                        children: [
-                          const Text('اختر المورد:', style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold)),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: DropdownButtonFormField<int>(
-                              value: selectedSupplierId,
-                              hint: const Text('حدد المورد', style: TextStyle(fontFamily: 'Cairo')),
-                              items: suppliers.map((s) {
-                                return DropdownMenuItem<int>(
-                                  value: s.id,
-                                  child: Text(s.name, style: const TextStyle(fontFamily: 'Cairo')),
-                                );
-                              }).toList(),
-                              onChanged: (val) {
-                                setDialogState(() => selectedSupplierId = val);
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Add Item controls
-                      Row(
-                        children: [
-                          Expanded(
-                            flex: 3,
-                            child: DropdownButtonFormField<Product>(
-                              hint: const Text('اختر المنتج للإضافة للمشتريات', style: TextStyle(fontFamily: 'Cairo')),
-                              items: products.map((p) {
-                                return DropdownMenuItem<Product>(
-                                  value: p,
-                                  child: Text('${p.nameAr} (سعر الشراء الحالي: ${p.purchasePrice})', style: const TextStyle(fontFamily: 'Cairo')),
-                                );
-                              }).toList(),
-                              onChanged: (p) {
-                                if (p != null) {
-                                  final existingIdx = cartItems.indexWhere((item) => item.product.id == p.id);
-                                  if (existingIdx >= 0) {
-                                    final existing = cartItems[existingIdx];
-                                    cartItems[existingIdx] = PurchaseCartItem(
-                                      product: p,
-                                      quantity: existing.quantity + 1,
-                                      purchasePrice: existing.purchasePrice,
-                                    );
-                                  } else {
-                                    cartItems.add(PurchaseCartItem(
-                                      product: p,
-                                      quantity: 1,
-                                      purchasePrice: p.purchasePrice > 0 ? p.purchasePrice : 10,
-                                    ));
-                                  }
-                                  setDialogState(() {});
-                                }
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Cart Items Table
-                      Expanded(
-                        child: Container(
-                          decoration: BoxDecoration(
-                            border: Border.all(color: AppColors.border),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: cartItems.isEmpty
-                              ? const Center(
-                                  child: Text(
-                                    'قم باختيار منتجات لإضافتها إلى فاتورة الشراء',
-                                    style: TextStyle(color: AppColors.textTertiary, fontFamily: 'Cairo'),
-                                  ),
-                                )
-                              : ListView.separated(
-                                  itemCount: cartItems.length,
-                                  separatorBuilder: (_, __) => const Divider(height: 1),
-                                  itemBuilder: (context, index) {
-                                    final item = cartItems[index];
-                                    return ListTile(
-                                      title: Text(item.product.nameAr, style: const TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold)),
-                                      subtitle: Row(
-                                        children: [
-                                          const Text('الكمية: ', style: TextStyle(fontFamily: 'Cairo', fontSize: 12)),
-                                          IconButton(
-                                            icon: const Icon(Icons.remove_circle_outline, size: 18),
-                                            onPressed: () {
-                                              if (item.quantity > 1) {
-                                                cartItems[index] = PurchaseCartItem(
-                                                  product: item.product,
-                                                  quantity: item.quantity - 1,
-                                                  purchasePrice: item.purchasePrice,
-                                                );
-                                              } else {
-                                                cartItems.removeAt(index);
-                                              }
-                                              setDialogState(() {});
-                                            },
-                                          ),
-                                          Text('${item.quantity}', style: const TextStyle(fontWeight: FontWeight.bold)),
-                                          IconButton(
-                                            icon: const Icon(Icons.add_circle_outline, size: 18),
-                                            onPressed: () {
-                                              cartItems[index] = PurchaseCartItem(
-                                                product: item.product,
-                                                quantity: item.quantity + 1,
-                                                purchasePrice: item.purchasePrice,
-                                              );
-                                              setDialogState(() {});
-                                            },
-                                          ),
-                                        ],
-                                      ),
-                                      trailing: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Text(
-                                            'الإجمالي: ${item.total.toStringAsFixed(2)} ج.م',
-                                            style: const TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold, color: AppColors.primary),
-                                          ),
-                                          IconButton(
-                                            icon: const Icon(Icons.delete, color: AppColors.error, size: 18),
-                                            onPressed: () {
-                                              cartItems.removeAt(index);
-                                              setDialogState(() {});
-                                            },
-                                          ),
-                                        ],
-                                      ),
-                                    );
-                                  },
-                                ),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Totals & Paid Amount
-                      Row(
-                        children: [
-                          Text('الإجمالي: ${subtotal.toStringAsFixed(2)} ج.م', style: const TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold, fontSize: 15)),
-                          const Spacer(),
-                          const Text('المدفوع: ', style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold)),
-                          SizedBox(
-                            width: 120,
-                            child: TextField(
-                              controller: paidController,
-                              keyboardType: TextInputType.number,
-                              decoration: const InputDecoration(
-                                suffixText: 'ج.م',
-                                border: OutlineInputBorder(),
-                                contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                              ),
-                              onChanged: (_) => setDialogState(() {}),
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Text('المتبقي: ${remaining.toStringAsFixed(2)} ج.م', style: const TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold, color: AppColors.error)),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(dialogCtx),
-                    child: const Text('إلغاء', style: TextStyle(fontFamily: 'Cairo', color: AppColors.textSecondary)),
-                  ),
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-                    onPressed: (selectedSupplierId == null || cartItems.isEmpty)
-                        ? null
-                        : () async {
-                            final invoiceId = await DbHelpers.savePurchaseInvoice(
-                              db,
-                              supplierId: selectedSupplierId!,
-                              items: cartItems,
-                              subtotal: subtotal,
-                              discount: 0.0,
-                              total: subtotal,
-                              paid: paid,
-                              paymentMethod: 'cash',
-                              userId: 1,
-                            );
-                            if (dialogCtx.mounted) {
-                              Navigator.pop(dialogCtx);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('تم حفظ فاتورة الشراء رقم $invoiceId بنجاح وتحديث المخزون!'),
-                                  backgroundColor: AppColors.success,
-                                ),
-                              );
-                            }
-                          },
-                    child: const Text('حفظ الفاتورة', style: TextStyle(fontFamily: 'Cairo', color: Colors.white, fontWeight: FontWeight.bold)),
-                  ),
-                ],
-              ),
-            );
-          },
-        );
-      },
+      builder: (context) => const NewPurchaseInvoiceDialog(),
     );
   }
 }

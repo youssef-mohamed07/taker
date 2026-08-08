@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:intl/intl.dart' as intl;
@@ -41,31 +42,31 @@ class _TreasuryViewState extends ConsumerState<TreasuryView> {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: EdgeInsets.all(24.w),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Header
             Row(
               children: [
-                const Expanded(
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         'إدارة الخزنة والنقدية',
                         style: TextStyle(
-                          fontSize: 24,
+                          fontSize: 24.sp,
                           fontWeight: FontWeight.w700,
                           color: AppColors.textPrimary,
                           fontFamily: 'Cairo',
                         ),
                       ),
-                      SizedBox(height: 4),
+                      SizedBox(height: 4.h),
                       Text(
                         'متابعة حركة النقدية، الإيداعات، السحوبات، والمصروفات اليومية',
                         style: TextStyle(
-                          fontSize: 14,
+                          fontSize: 14.sp,
                           color: AppColors.textSecondary,
                           fontFamily: 'Cairo',
                         ),
@@ -75,42 +76,42 @@ class _TreasuryViewState extends ConsumerState<TreasuryView> {
                 ),
                 ElevatedButton.icon(
                   onPressed: () => _showAddTransactionDialog(context, db, isIncome: true),
-                  icon: const Icon(LucideIcons.arrowDownCircle, size: 18),
-                  label: const Text('سند قبض (إيداع)', style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold)),
+                  icon: Icon(LucideIcons.arrowDownCircle, size: 18),
+                  label: Text('سند قبض (إيداع)', style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold)),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.success,
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.r)),
                   ),
                 ),
-                const SizedBox(width: 8),
+                SizedBox(width: 8.w),
                 ElevatedButton.icon(
                   onPressed: () => _showAddTransactionDialog(context, db, isIncome: false),
-                  icon: const Icon(LucideIcons.arrowUpCircle, size: 18),
-                  label: const Text('سند صرف (مصروفات)', style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold)),
+                  icon: Icon(LucideIcons.arrowUpCircle, size: 18),
+                  label: Text('سند صرف (مصروفات)', style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold)),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.error,
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.r)),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: 24.h),
 
             // Balance Card
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(24),
+              padding: EdgeInsets.all(24.w),
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
+                gradient: LinearGradient(
                   colors: [AppColors.primary, AppColors.primaryLight],
                   begin: Alignment.topRight,
                   end: Alignment.bottomLeft,
                 ),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(12.r),
                 boxShadow: [
                   BoxShadow(
                     color: AppColors.primary.withValues(alpha: 0.3),
@@ -125,22 +126,22 @@ class _TreasuryViewState extends ConsumerState<TreasuryView> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'إجمالي رصيد الخزنة الحالي',
                           style: TextStyle(
                             color: Colors.white70,
-                            fontSize: 14,
+                            fontSize: 14.sp,
                             fontFamily: 'Cairo',
                           ),
                         ),
-                        const SizedBox(height: 8),
+                        SizedBox(height: 8.h),
                         FittedBox(
                           fit: BoxFit.scaleDown,
                           child: Text(
                             '${currentBalance.toStringAsFixed(2)} ج.م',
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: Colors.white,
-                              fontSize: 32,
+                              fontSize: 32.sp,
                               fontWeight: FontWeight.w700,
                               fontFamily: 'Cairo',
                             ),
@@ -149,47 +150,48 @@ class _TreasuryViewState extends ConsumerState<TreasuryView> {
                       ],
                     ),
                   ),
-                  const SizedBox(width: 16),
+                  SizedBox(width: 16.w),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Text(
                         'إجمالي المقبوضات: +${totalIncome.toStringAsFixed(2)} ج.م',
-                        style: const TextStyle(color: Colors.white, fontFamily: 'Cairo', fontWeight: FontWeight.bold, fontSize: 13),
+                        style: TextStyle(color: Colors.white, fontFamily: 'Cairo', fontWeight: FontWeight.bold, fontSize: 13.sp),
                       ),
-                      const SizedBox(height: 4),
+                      SizedBox(height: 4.h),
                       Text(
                         'إجمالي المصروفات: -${totalExpense.toStringAsFixed(2)} ج.م',
-                        style: const TextStyle(color: Colors.white70, fontFamily: 'Cairo', fontSize: 13),
+                        style: TextStyle(color: Colors.white70, fontFamily: 'Cairo', fontSize: 13.sp),
                       ),
                     ],
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: 24.h),
 
-            const Text(
+            Text(
               'سجل حركات الخزنة النقدية',
               style: TextStyle(
-                fontSize: 18,
+                fontSize: 18.sp,
                 fontWeight: FontWeight.bold,
                 fontFamily: 'Cairo',
                 color: AppColors.textPrimary,
               ),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12.h),
 
             // Transactions Table
             Expanded(
               child: Container(
+                width: double.infinity,
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(12.r),
                   border: Border.all(color: AppColors.border),
                 ),
                 child: transactions.isEmpty
-                    ? const Center(
+                    ? Center(
                         child: Text(
                           'لا توجد حركات في الخزنة حتى الآن',
                           style: TextStyle(color: AppColors.textTertiary, fontFamily: 'Cairo'),
@@ -197,19 +199,19 @@ class _TreasuryViewState extends ConsumerState<TreasuryView> {
                       )
                     : ListView.separated(
                         itemCount: transactions.length,
-                        separatorBuilder: (_, __) => const Divider(height: 1),
+                        separatorBuilder: (_, __) => Divider(height: 1.h),
                         itemBuilder: (context, index) {
                           final t = transactions[index];
                           final typeUpper = t.type.toUpperCase();
                           final isInc = typeUpper == 'INCOME' || typeUpper == 'SALE' || typeUpper == 'DEPOSIT' || typeUpper == 'IN';
 
                           return ListTile(
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                            contentPadding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 8.h),
                             leading: Container(
-                              padding: const EdgeInsets.all(10),
+                              padding: EdgeInsets.all(10.w),
                               decoration: BoxDecoration(
                                 color: isInc ? AppColors.success.withValues(alpha: 0.1) : AppColors.error.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(10),
+                                borderRadius: BorderRadius.circular(10.r),
                               ),
                               child: Icon(
                                 isInc ? LucideIcons.arrowDownCircle : LucideIcons.arrowUpCircle,
@@ -222,22 +224,22 @@ class _TreasuryViewState extends ConsumerState<TreasuryView> {
                                 Expanded(
                                   child: Text(
                                     t.description ?? (isInc ? 'إيداع/قبض نقدي' : 'صرف/مصروفات'),
-                                    style: const TextStyle(fontWeight: FontWeight.bold, fontFamily: 'Cairo'),
+                                    style: TextStyle(fontWeight: FontWeight.bold, fontFamily: 'Cairo'),
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
-                                const SizedBox(width: 12),
+                                SizedBox(width: 12.w),
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
                                   decoration: BoxDecoration(
                                     color: isInc ? AppColors.successLight : AppColors.errorLight,
-                                    borderRadius: BorderRadius.circular(6),
+                                    borderRadius: BorderRadius.circular(6.r),
                                   ),
                                   child: Text(
                                     t.type.toUpperCase(),
                                     style: TextStyle(
                                       color: isInc ? AppColors.success : AppColors.error,
-                                      fontSize: 10,
+                                      fontSize: 10.sp,
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
@@ -246,13 +248,13 @@ class _TreasuryViewState extends ConsumerState<TreasuryView> {
                             ),
                             subtitle: Text(
                               'التاريخ: ${intl.DateFormat('yyyy/MM/dd HH:mm').format(t.createdAt)}',
-                              style: const TextStyle(color: AppColors.textSecondary, fontFamily: 'Cairo', fontSize: 12),
+                              style: TextStyle(color: AppColors.textSecondary, fontFamily: 'Cairo', fontSize: 12.sp),
                             ),
                             trailing: Text(
                               '${isInc ? '+' : '-'}${t.amount.toStringAsFixed(2)} ج.م',
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
-                                fontSize: 16,
+                                fontSize: 16.sp,
                                 color: isInc ? AppColors.success : AppColors.error,
                               ),
                             ),
@@ -283,15 +285,15 @@ class _TreasuryViewState extends ConsumerState<TreasuryView> {
                   isIncome ? LucideIcons.arrowDownCircle : LucideIcons.arrowUpCircle,
                   color: isIncome ? AppColors.success : AppColors.error,
                 ),
-                const SizedBox(width: 8),
+                SizedBox(width: 8.w),
                 Text(
                   isIncome ? 'سند قبض / إيداع جديد' : 'سند صرف / مصروف جديد',
-                  style: const TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold),
+                  style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold),
                 ),
               ],
             ),
             content: SizedBox(
-              width: 450,
+              width: 450.w,
               child: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -304,7 +306,7 @@ class _TreasuryViewState extends ConsumerState<TreasuryView> {
                       border: OutlineInputBorder(),
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16.h),
                   TextField(
                     controller: descController,
                     decoration: const InputDecoration(
@@ -319,7 +321,7 @@ class _TreasuryViewState extends ConsumerState<TreasuryView> {
           actions: [
               TextButton(
                 onPressed: () => Navigator.pop(dialogCtx),
-                child: const Text('إلغاء', style: TextStyle(fontFamily: 'Cairo', color: AppColors.textSecondary)),
+                child: Text('إلغاء', style: TextStyle(fontFamily: 'Cairo', color: AppColors.textSecondary)),
               ),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(backgroundColor: isIncome ? AppColors.success : AppColors.error),
@@ -345,7 +347,7 @@ class _TreasuryViewState extends ConsumerState<TreasuryView> {
                     }
                   }
                 },
-                child: const Text('تسجيل الحركة', style: TextStyle(fontFamily: 'Cairo', color: Colors.white, fontWeight: FontWeight.bold)),
+                child: Text('تسجيل الحركة', style: TextStyle(fontFamily: 'Cairo', color: Colors.white, fontWeight: FontWeight.bold)),
               ),
             ],
           ),

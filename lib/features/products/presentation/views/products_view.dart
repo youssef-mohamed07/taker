@@ -924,6 +924,7 @@ class _EditProductDialogState extends ConsumerState<EditProductDialog> {
   late final TextEditingController _retailPriceController;
   late final TextEditingController _wholesalePriceController;
   late final TextEditingController _minQtyController;
+  late final TextEditingController _qtyController;
   int? _selectedCategoryId;
   bool _isLoading = false;
 
@@ -946,6 +947,9 @@ class _EditProductDialogState extends ConsumerState<EditProductDialog> {
     );
     _minQtyController = TextEditingController(
       text: widget.product.minQuantity.toString(),
+    );
+    _qtyController = TextEditingController(
+      text: widget.product.currentQuantity.toString(),
     );
     _selectedCategoryId = widget.product.categoryId;
 
@@ -975,6 +979,7 @@ class _EditProductDialogState extends ConsumerState<EditProductDialog> {
     _retailPriceController.dispose();
     _wholesalePriceController.dispose();
     _minQtyController.dispose();
+    _qtyController.dispose();
     super.dispose();
   }
 
@@ -1002,6 +1007,16 @@ class _EditProductDialogState extends ConsumerState<EditProductDialog> {
             double.tryParse(_wholesalePriceController.text.trim()) ?? 0.0,
         minQuantity: double.tryParse(_minQtyController.text.trim()) ?? 0.0,
       );
+
+      final newQty = double.tryParse(_qtyController.text.trim()) ?? 0.0;
+      final delta = newQty - widget.product.currentQuantity;
+      if (delta != 0) {
+        await DbHelpers.updateProductStock(
+          db: db,
+          productId: widget.product.id,
+          quantityDelta: delta,
+        );
+      }
 
       if (mounted) {
         Navigator.of(context).pop();
@@ -1171,13 +1186,30 @@ class _EditProductDialogState extends ConsumerState<EditProductDialog> {
                   ],
                 ),
                 const SizedBox(height: 12),
-                TextFormField(
-                  controller: _minQtyController,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'الحد الأدنى للإنذار بالمخزون',
-                    border: OutlineInputBorder(),
-                  ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        controller: _qtyController,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(
+                          labelText: 'الكمية الحالية',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: TextFormField(
+                        controller: _minQtyController,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(
+                          labelText: 'الحد الأدنى للإنذار بالمخزون',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 24),
                 Row(

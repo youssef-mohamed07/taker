@@ -9,6 +9,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  crypto: ^3.0.3
 
   # State Management
   flutter_riverpod: ^2.6.1
@@ -43,6 +44,10 @@ dependencies:
   intl: ^0.20.2
   uuid: ^4.5.1
   path: ^1.9.1
+  flutter_screenutil: ^5.9.3
+  responsive_builder: ^0.7.1
+  shared_preferences: ^2.2.2
+  audioplayers: ^6.7.1
 
 dev_dependencies:
   flutter_test:
@@ -59,5 +64,6 @@ flutter:
 
   assets:
     - assets/images/
+    - assets/audio/
     - assets/sounds/
 

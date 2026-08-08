@@ -43,6 +43,7 @@ class Shifts extends Table {
   DateTimeColumn get openedAt => dateTime().withDefault(currentDateAndTime)();
   DateTimeColumn get closedAt => dateTime().nullable()();
   TextColumn get notes => text().nullable()();
+  TextColumn get companionNames => text().nullable()();
 }
 
 /// Partners

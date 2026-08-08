@@ -1,9 +1,17 @@
+import '../../features/inventory/presentation/views/inventory_count_view.dart';
+import '../../features/users/presentation/views/users_view.dart';
+import '../../features/finance/presentation/views/expenses_view.dart';
+import '../../features/sales_history/presentation/views/sales_history_view.dart';
+import '../../features/purchases/presentation/views/purchase_history_view.dart';
+import '../../features/reports/presentation/views/expiration_alerts_view.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import '../../features/auth/presentation/views/login_view.dart';
 import '../../features/dashboard/presentation/views/dashboard_view.dart';
 import '../../features/products/presentation/views/products_view.dart';
 import '../../features/products/presentation/views/product_form_view.dart';
+import '../../features/products/presentation/views/categories_view.dart';
 import '../../features/pos/presentation/views/pos_view.dart';
 import '../../features/purchases/presentation/views/purchases_view.dart';
 import '../../features/inventory/presentation/views/inventory_view.dart';
@@ -15,6 +23,8 @@ import '../../features/partners/presentation/views/partners_view.dart';
 import '../../features/reports/presentation/views/reports_view.dart';
 import '../../features/settings/presentation/views/settings_view.dart';
 import '../../features/audit/presentation/views/audit_view.dart';
+import '../../features/returns/presentation/views/returns_view.dart';
+
 import '../common/widgets/app_shell.dart';
 
 class AppRouter {
@@ -31,7 +41,7 @@ class AppRouter {
       GoRoute(path: '/login', builder: (context, state) => const LoginView()),
 
       // POS (full screen, no shell)
-      GoRoute(path: '/pos', builder: (context, state) => const PosView()),
+      GoRoute(path: '/pos', builder: (context, state) => PosView(initialData: state.extra as Map<String, dynamic>?)),
 
       // Main app with sidebar shell
       ShellRoute(
@@ -58,6 +68,11 @@ class AppRouter {
             builder: (context, state) => ProductFormView(
               productId: int.tryParse(state.pathParameters['id'] ?? ''),
             ),
+          ),
+          GoRoute(
+            path: '/categories',
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: CategoriesView()),
           ),
           GoRoute(
             path: '/purchases',
@@ -108,6 +123,38 @@ class AppRouter {
             path: '/audit',
             pageBuilder: (context, state) =>
                 const NoTransitionPage(child: AuditView()),
+          ),
+
+          GoRoute(
+            path: '/returns',
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: ReturnsView()),
+          ),
+          GoRoute(
+            path: '/expenses',
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: ExpensesView()),
+          ),
+          GoRoute(
+            path: '/users',
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: UsersView()),
+          ),
+          GoRoute(
+            path: '/inventory-count',
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: InventoryCountView()),
+          ),
+
+          GoRoute(
+            path: '/sales-history',
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: SalesHistoryView()),
+          ),
+          GoRoute(
+            path: '/purchase-history',
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: PurchaseHistoryView()),
           ),
         ],
       ),

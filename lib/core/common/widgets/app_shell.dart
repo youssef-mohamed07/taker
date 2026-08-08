@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:responsive_builder/responsive_builder.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
@@ -18,200 +20,301 @@ class AppShell extends ConsumerWidget {
 
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: Scaffold(
-        body: Row(
-          children: [
-            // ─── Sidebar ───────────────────────
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              width: isCollapsed ? 72 : 260,
-              decoration: const BoxDecoration(
-                color: AppColors.sidebarBg,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black12,
-                    blurRadius: 8,
-                    offset: Offset(2, 0),
-                  ),
-                ],
-              ),
-              child: Column(
-                children: [
-                  // Logo / Header
-                  _buildHeader(isCollapsed, ref),
-
-                  const SizedBox(height: 8),
-
-                  // Navigation items
-                  Expanded(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      child: Column(
-                        children: [
-                          _buildNavItem(
-                            context,
-                            icon: LucideIcons.layoutDashboard,
-                            label: 'لوحة التحكم',
-                            path: '/dashboard',
-                            currentPath: currentPath,
-                            isCollapsed: isCollapsed,
-                          ),
-                          _buildSectionHeader('المبيعات', isCollapsed),
-                          _buildNavItem(
-                            context,
-                            icon: LucideIcons.monitor,
-                            label: 'نقطة البيع',
-                            path: '/pos',
-                            currentPath: currentPath,
-                            isCollapsed: isCollapsed,
-                            isFullScreen: true,
-                          ),
-                          _buildNavItem(
-                            context,
-                            icon: LucideIcons.users,
-                            label: 'العملاء',
-                            path: '/customers',
-                            currentPath: currentPath,
-                            isCollapsed: isCollapsed,
-                          ),
-                          _buildSectionHeader('المخزون', isCollapsed),
-                          _buildNavItem(
-                            context,
-                            icon: LucideIcons.box,
-                            label: 'المنتجات',
-                            path: '/products',
-                            currentPath: currentPath,
-                            isCollapsed: isCollapsed,
-                          ),
-                          _buildNavItem(
-                            context,
-                            icon: LucideIcons.shoppingCart,
-                            label: 'المشتريات',
-                            path: '/purchases',
-                            currentPath: currentPath,
-                            isCollapsed: isCollapsed,
-                          ),
-                          _buildNavItem(
-                            context,
-                            icon: LucideIcons.warehouse,
-                            label: 'المخزن',
-                            path: '/inventory',
-                            currentPath: currentPath,
-                            isCollapsed: isCollapsed,
-                          ),
-                          _buildNavItem(
-                            context,
-                            icon: LucideIcons.truck,
-                            label: 'الموردون',
-                            path: '/suppliers',
-                            currentPath: currentPath,
-                            isCollapsed: isCollapsed,
-                          ),
-                          _buildSectionHeader('المالية', isCollapsed),
-                          _buildNavItem(
-                            context,
-                            icon: LucideIcons.wallet,
-                            label: 'الخزنة',
-                            path: '/treasury',
-                            currentPath: currentPath,
-                            isCollapsed: isCollapsed,
-                          ),
-                          _buildNavItem(
-                            context,
-                            icon: LucideIcons.clock,
-                            label: 'الشيفتات',
-                            path: '/shifts',
-                            currentPath: currentPath,
-                            isCollapsed: isCollapsed,
-                          ),
-                          _buildNavItem(
-                            context,
-                            icon: LucideIcons.users2,
-                            label: 'الشركاء',
-                            path: '/partners',
-                            currentPath: currentPath,
-                            isCollapsed: isCollapsed,
-                          ),
-                          _buildSectionHeader('النظام', isCollapsed),
-                          _buildNavItem(
-                            context,
-                            icon: LucideIcons.barChart3,
-                            label: 'التقارير',
-                            path: '/reports',
-                            currentPath: currentPath,
-                            isCollapsed: isCollapsed,
-                          ),
-                          _buildNavItem(
-                            context,
-                            icon: LucideIcons.settings,
-                            label: 'الإعدادات',
-                            path: '/settings',
-                            currentPath: currentPath,
-                            isCollapsed: isCollapsed,
-                          ),
-                          _buildNavItem(
-                            context,
-                            icon: LucideIcons.fileText,
-                            label: 'سجل العمليات',
-                            path: '/audit',
-                            currentPath: currentPath,
-                            isCollapsed: isCollapsed,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  // Collapse toggle
-                  _buildCollapseButton(isCollapsed, ref),
-                ],
-              ),
+      child: ScreenTypeLayout.builder(
+        mobile: (context) => Scaffold(
+          appBar: AppBar(
+            title: Text('تاجر', style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold)),
+            backgroundColor: AppColors.primary,
+            foregroundColor: Colors.white,
+          ),
+          drawer: Drawer(
+            child: Container(
+              color: AppColors.sidebarBg,
+              child: _buildSidebarContent(context, ref, false, currentPath),
             ),
-
-            // ─── Main Content ──────────────────
-            Expanded(child: child),
-          ],
+          ),
+          body: child,
+        ),
+        tablet: (context) => Scaffold(
+          body: Row(
+            children: [
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                width: isCollapsed ? 72 : 260,
+                decoration: BoxDecoration(
+                  color: AppColors.sidebarBg,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black12,
+                      blurRadius: 8,
+                      offset: Offset(2, 0),
+                    ),
+                  ],
+                ),
+                child: _buildSidebarContent(context, ref, isCollapsed, currentPath),
+              ),
+              Expanded(child: child),
+            ],
+          ),
+        ),
+        desktop: (context) => Scaffold(
+          body: Row(
+            children: [
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                width: isCollapsed ? 72 : 260,
+                decoration: BoxDecoration(
+                  color: AppColors.sidebarBg,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black12,
+                      blurRadius: 8,
+                      offset: Offset(2, 0),
+                    ),
+                  ],
+                ),
+                child: _buildSidebarContent(context, ref, isCollapsed, currentPath),
+              ),
+              Expanded(child: child),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildHeader(bool isCollapsed, WidgetRef ref) {
+  Widget _buildSidebarContent(BuildContext context, WidgetRef ref, bool isCollapsed, String currentPath) {
+    return Column(
+      children: [
+        // Logo / Header
+        _buildHeader(context, isCollapsed, ref),
+
+        SizedBox(height: 8.h),
+
+        // Navigation items
+        Expanded(
+          child: SingleChildScrollView(
+            padding: EdgeInsets.symmetric(horizontal: 8.w),
+            child: Column(
+              children: [
+                _buildNavItem(
+                  context,
+                  icon: LucideIcons.layoutDashboard,
+                  label: 'لوحة التحكم',
+                  path: '/dashboard',
+                  currentPath: currentPath,
+                  isCollapsed: isCollapsed,
+                ),
+                _buildSectionHeader(context, 'المبيعات', isCollapsed),
+                _buildNavItem(
+                  context,
+                  icon: LucideIcons.monitor,
+                  label: 'نقطة البيع',
+                  path: '/pos',
+                  currentPath: currentPath,
+                  isCollapsed: isCollapsed,
+                  isFullScreen: true,
+                ),
+                _buildNavItem(
+                  context,
+                  icon: LucideIcons.fileText,
+                  label: 'فواتير المبيعات',
+                  path: '/sales-history',
+                  currentPath: currentPath,
+                  isCollapsed: isCollapsed,
+                ),
+                _buildNavItem(
+                  context,
+                  icon: LucideIcons.users,
+                  label: 'العملاء',
+                  path: '/customers',
+                  currentPath: currentPath,
+                  isCollapsed: isCollapsed,
+                ),
+                _buildSectionHeader(context, 'المخزون', isCollapsed),
+                _buildNavItem(
+                  context,
+                  icon: LucideIcons.box,
+                  label: 'المنتجات',
+                  path: '/products',
+                  currentPath: currentPath,
+                  isCollapsed: isCollapsed,
+                ),
+                _buildNavItem(
+                  context,
+                  icon: LucideIcons.tags,
+                  label: 'التصنيفات',
+                  path: '/categories',
+                  currentPath: currentPath,
+                  isCollapsed: isCollapsed,
+                ),
+                _buildNavItem(
+                  context,
+                  icon: LucideIcons.refreshCcw,
+                  label: 'المرتجعات',
+                  path: '/returns',
+                  currentPath: currentPath,
+                  isCollapsed: isCollapsed,
+                ),
+                _buildNavItem(
+                  context,
+                  icon: LucideIcons.shoppingCart,
+                  label: 'المشتريات',
+                  path: '/purchases',
+                  currentPath: currentPath,
+                  isCollapsed: isCollapsed,
+                ),
+                _buildNavItem(
+                  context,
+                  icon: LucideIcons.fileText,
+                  label: 'فواتير المشتريات',
+                  path: '/purchase-history',
+                  currentPath: currentPath,
+                  isCollapsed: isCollapsed,
+                ),
+                _buildNavItem(
+                  context,
+                  icon: LucideIcons.warehouse,
+                  label: 'المخزن',
+                  path: '/inventory',
+                  currentPath: currentPath,
+                  isCollapsed: isCollapsed,
+                ),
+                _buildNavItem(
+                  context,
+                  icon: LucideIcons.clipboardCheck,
+                  label: 'جرد المخزون',
+                  path: '/inventory-count',
+                  currentPath: currentPath,
+                  isCollapsed: isCollapsed,
+                ),
+                _buildNavItem(
+                  context,
+                  icon: LucideIcons.truck,
+                  label: 'الموردون',
+                  path: '/suppliers',
+                  currentPath: currentPath,
+                  isCollapsed: isCollapsed,
+                ),
+                _buildSectionHeader(context, 'المالية', isCollapsed),
+                _buildNavItem(
+                  context,
+                  icon: LucideIcons.wallet,
+                  label: 'الخزنة',
+                  path: '/treasury',
+                  currentPath: currentPath,
+                  isCollapsed: isCollapsed,
+                ),
+                _buildNavItem(
+                  context,
+                  icon: LucideIcons.receipt,
+                  label: 'المصروفات',
+                  path: '/expenses',
+                  currentPath: currentPath,
+                  isCollapsed: isCollapsed,
+                ),
+                _buildNavItem(
+                  context,
+                  icon: LucideIcons.clock,
+                  label: 'الشيفتات',
+                  path: '/shifts',
+                  currentPath: currentPath,
+                  isCollapsed: isCollapsed,
+                ),
+                _buildNavItem(
+                  context,
+                  icon: LucideIcons.users2,
+                  label: 'الشركاء',
+                  path: '/partners',
+                  currentPath: currentPath,
+                  isCollapsed: isCollapsed,
+                ),
+                _buildSectionHeader(context, 'النظام', isCollapsed),
+                _buildNavItem(
+                  context,
+                  icon: LucideIcons.barChart3,
+                  label: 'التقارير',
+                  path: '/reports',
+                  currentPath: currentPath,
+                  isCollapsed: isCollapsed,
+                ),
+                _buildNavItem(
+                  context,
+                  icon: LucideIcons.settings,
+                  label: 'الإعدادات',
+                  path: '/settings',
+                  currentPath: currentPath,
+                  isCollapsed: isCollapsed,
+                ),
+                _buildNavItem(
+                  context,
+                  icon: LucideIcons.userCog,
+                  label: 'المستخدمين',
+                  path: '/users',
+                  currentPath: currentPath,
+                  isCollapsed: isCollapsed,
+                ),
+                _buildNavItem(
+                  context,
+                  icon: LucideIcons.fileText,
+                  label: 'سجل العمليات',
+                  path: '/audit',
+                  currentPath: currentPath,
+                  isCollapsed: isCollapsed,
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        // Collapse toggle (only show if not on mobile)
+        if (getValueForScreenType<bool>(
+          context: context,
+          mobile: false,
+          tablet: true,
+          desktop: true,
+        ))
+          _buildCollapseButton(context, isCollapsed, ref),
+      ],
+    );
+  }
+
+  Widget _buildHeader(BuildContext context, bool isCollapsed, WidgetRef ref) {
     return Container(
-      height: 64,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: const BoxDecoration(
+      height: 64.h,
+      padding: EdgeInsets.symmetric(horizontal: 16.w),
+      decoration: BoxDecoration(
         border: Border(
-          bottom: BorderSide(color: AppColors.sidebarDivider, width: 1),
+          bottom: BorderSide(color: AppColors.sidebarDivider, width: 1.w),
         ),
       ),
       child: Row(
         children: [
           Container(
-            width: 36,
-            height: 36,
+            width: 36.w,
+            height: 36.h,
             decoration: BoxDecoration(
               color: AppColors.primary,
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(8.r),
             ),
-            child: const Center(
+            child: Center(
               child: Text(
                 'ت',
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: 18,
+                  fontSize: 18.sp,
                   fontWeight: FontWeight.w700,
                 ),
               ),
             ),
           ),
           if (!isCollapsed) ...[
-            const SizedBox(width: 12),
-            const Text(
+            SizedBox(width: 12.w),
+            Text(
               'تاجر',
               style: TextStyle(
                 color: Colors.white,
-                fontSize: 20,
+                fontSize: 20.sp,
                 fontWeight: FontWeight.w700,
                 fontFamily: 'Cairo',
               ),
@@ -222,11 +325,11 @@ class AppShell extends ConsumerWidget {
     );
   }
 
-  Widget _buildSectionHeader(String title, bool isCollapsed) {
+  Widget _buildSectionHeader(BuildContext context, String title, bool isCollapsed) {
     if (isCollapsed) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 8),
-        child: Divider(color: AppColors.sidebarDivider, height: 1),
+      return Padding(
+        padding: EdgeInsets.symmetric(vertical: 8.h),
+        child: Divider(color: AppColors.sidebarDivider, height: 1.h),
       );
     }
     return Padding(
@@ -235,9 +338,9 @@ class AppShell extends ConsumerWidget {
         alignment: AlignmentDirectional.centerStart,
         child: Text(
           title,
-          style: const TextStyle(
+          style: TextStyle(
             color: AppColors.sidebarIcon,
-            fontSize: 11,
+            fontSize: 11.sp,
             fontWeight: FontWeight.w600,
             fontFamily: 'Cairo',
             letterSpacing: 0.5,
@@ -259,7 +362,7 @@ class AppShell extends ConsumerWidget {
     final isActive = currentPath == path;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
+      padding: EdgeInsets.symmetric(vertical: 2.h),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
@@ -270,17 +373,17 @@ class AppShell extends ConsumerWidget {
               context.go(path);
             }
           },
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(8.r),
           hoverColor: AppColors.sidebarBgHover,
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 150),
             padding: EdgeInsets.symmetric(
               horizontal: isCollapsed ? 0 : 12,
-              vertical: 10,
+              vertical: 10.h,
             ),
             decoration: BoxDecoration(
               color: isActive ? AppColors.sidebarBgActive : Colors.transparent,
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(8.r),
             ),
             child: Row(
               mainAxisAlignment: isCollapsed
@@ -295,14 +398,14 @@ class AppShell extends ConsumerWidget {
                       : AppColors.sidebarIcon,
                 ),
                 if (!isCollapsed) ...[
-                  const SizedBox(width: 12),
+                  SizedBox(width: 12.w),
                   Text(
                     label,
                     style: TextStyle(
                       color: isActive
                           ? AppColors.sidebarTextActive
                           : AppColors.sidebarText,
-                      fontSize: 14,
+                      fontSize: 14.sp,
                       fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
                       fontFamily: 'Cairo',
                     ),
@@ -316,12 +419,12 @@ class AppShell extends ConsumerWidget {
     );
   }
 
-  Widget _buildCollapseButton(bool isCollapsed, WidgetRef ref) {
+  Widget _buildCollapseButton(BuildContext context, bool isCollapsed, WidgetRef ref) {
     return Container(
-      padding: const EdgeInsets.all(8),
-      decoration: const BoxDecoration(
+      padding: EdgeInsets.all(8.w),
+      decoration: BoxDecoration(
         border: Border(
-          top: BorderSide(color: AppColors.sidebarDivider, width: 1),
+          top: BorderSide(color: AppColors.sidebarDivider, width: 1.w),
         ),
       ),
       child: IconButton(
