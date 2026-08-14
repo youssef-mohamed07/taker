@@ -7,6 +7,7 @@ import 'package:drift/drift.dart' as drift;
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/database/app_database.dart';
 import '../../../../core/di/providers.dart';
+import '../../../../core/printing/receipt_printer.dart';
 
 class SalesHistoryView extends ConsumerStatefulWidget {
   const SalesHistoryView({super.key});
@@ -301,15 +302,48 @@ class _InvoiceDetailsDialogState extends ConsumerState<InvoiceDetailsDialog> {
                 ),
             SizedBox(height: 16.h),
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('الإجمالي: ${widget.invoice.total} ج.م', style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold, fontSize: 16.sp)),
-                
+                Expanded(
+                  child: Text('الإجمالي: ${widget.invoice.total.toStringAsFixed(2)} ج.م', style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold, fontSize: 16.sp)),
+                ),
+                OutlinedButton.icon(
+                  onPressed: _isLoading ? null : _printInvoice,
+                  icon: Icon(LucideIcons.printer, size: 16),
+                  label: Text('طباعة', style: TextStyle(fontFamily: 'Cairo')),
+                ),
               ],
             )
           ],
         ),
       ),
     );
+  }
+
+  Future<void> _printInvoice() async {
+    try {
+      await ReceiptPrinter.printInvoice(
+        invoice: widget.invoice,
+        lines: [
+          for (final item in _items)
+            ReceiptLine(
+              productName: item['product'] as String,
+              quantity: item['quantity'] as double,
+              unitPrice: item['price'] as double,
+              total: item['total'] as double,
+            ),
+        ],
+        customerName: widget.customerName,
+        cashierName: ref.read(currentUserProvider)?.fullName,
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('تعذر الطباعة: $e', style: const TextStyle(fontFamily: 'Cairo')),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
   }
 }

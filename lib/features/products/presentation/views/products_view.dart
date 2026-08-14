@@ -993,6 +993,118 @@ class ProductDetailsDialog extends ConsumerWidget {
 }
 
 /// Dialog to edit product
+/// Dropdown picker with inline "add new" support for brands & units.
+class BrandUnitPicker extends StatefulWidget {
+  final String label;
+  final IconData icon;
+  final List<({int id, String name})> options;
+  final int? selectedId;
+  final ValueChanged<int?> onChanged;
+  final Future<int?> Function(String name) onCreate;
+
+  const BrandUnitPicker({
+    super.key,
+    required this.label,
+    required this.icon,
+    required this.options,
+    required this.selectedId,
+    required this.onChanged,
+    required this.onCreate,
+  });
+
+  @override
+  State<BrandUnitPicker> createState() => _BrandUnitPickerState();
+}
+
+class _BrandUnitPickerState extends State<BrandUnitPicker> {
+  final _newController = TextEditingController();
+  bool _adding = false;
+
+  @override
+  void dispose() {
+    _newController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_adding) {
+      return Row(
+        children: [
+          Expanded(
+            child: TextField(
+              controller: _newController,
+              autofocus: true,
+              decoration: InputDecoration(
+                labelText: widget.label,
+                border: const OutlineInputBorder(),
+                isDense: true,
+              ),
+            ),
+          ),
+          IconButton(
+            icon: const Icon(LucideIcons.check, color: AppColors.success),
+            onPressed: () async {
+              final name = _newController.text.trim();
+              if (name.isEmpty) return;
+              final id = await widget.onCreate(name);
+              if (id != null) widget.onChanged(id);
+              if (mounted) {
+                setState(() {
+                  _adding = false;
+                  _newController.clear();
+                });
+              }
+            },
+          ),
+          IconButton(
+            icon: const Icon(LucideIcons.x, color: AppColors.error),
+            onPressed: () => setState(() => _adding = false),
+          ),
+        ],
+      );
+    }
+
+    return Row(
+      children: [
+        Expanded(
+          child: DropdownButtonFormField<int?>(
+            initialValue: widget.selectedId,
+            isExpanded: true,
+            decoration: InputDecoration(
+              labelText: widget.label,
+              border: const OutlineInputBorder(),
+              prefixIcon: Icon(widget.icon),
+            ),
+            items: [
+              const DropdownMenuItem<int?>(
+                value: null,
+                child: Text('بدون تحديد', style: TextStyle(fontFamily: 'Cairo')),
+              ),
+              ...widget.options.map(
+                (o) => DropdownMenuItem<int?>(
+                  value: o.id,
+                  child: Text(
+                    o.name,
+                    style: const TextStyle(fontFamily: 'Cairo'),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ),
+            ],
+            onChanged: widget.onChanged,
+          ),
+        ),
+        IconButton(
+          icon: const Icon(LucideIcons.plusCircle, color: AppColors.primary),
+          tooltip: 'إضافة جديد',
+          onPressed: () => setState(() => _adding = true),
+        ),
+      ],
+    );
+  }
+}
+
 class EditProductDialog extends ConsumerStatefulWidget {
   final Product product;
   const EditProductDialog({super.key, required this.product});
@@ -1013,6 +1125,8 @@ class _EditProductDialogState extends ConsumerState<EditProductDialog> {
   late final TextEditingController _qtyController;
   late final TextEditingController _categoryController;
   int? _selectedCategoryId;
+  int? _selectedBrandId;
+  int? _selectedUnitId;
   bool _isLoading = false;
 
   @override
@@ -1040,6 +1154,8 @@ class _EditProductDialogState extends ConsumerState<EditProductDialog> {
     );
     _categoryController = TextEditingController();
     _selectedCategoryId = widget.product.categoryId;
+    _selectedBrandId = widget.product.brandId;
+    _selectedUnitId = widget.product.unitId;
 
     _loadBarcode();
     _loadCategoryName();
@@ -1122,6 +1238,8 @@ class _EditProductDialogState extends ConsumerState<EditProductDialog> {
             ? null
             : _barcodeController.text.trim(),
         categoryId: categoryId,
+        brandId: _selectedBrandId,
+        unitId: _selectedUnitId,
         purchasePrice:
             double.tryParse(_purchasePriceController.text.trim()) ?? 0.0,
         retailPrice: double.tryParse(_retailPriceController.text.trim()) ?? 0.0,
@@ -1171,6 +1289,8 @@ class _EditProductDialogState extends ConsumerState<EditProductDialog> {
   @override
   Widget build(BuildContext context) {
     final categoriesAsync = ref.watch(categoriesStreamProvider);
+    final brands = ref.watch(brandsStreamProvider).value ?? [];
+    final units = ref.watch(unitsStreamProvider).value ?? [];
 
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -1320,6 +1440,38 @@ class _EditProductDialogState extends ConsumerState<EditProductDialog> {
                 Row(
                   children: [
                     Expanded(
+                      child: BrandUnitPicker(
+                        label: 'العلامة التجارية',
+                        icon: LucideIcons.tag,
+                        options: [for (final b in brands) (id: b.id, name: b.name)],
+                        selectedId: _selectedBrandId,
+                        onChanged: (v) => setState(() => _selectedBrandId = v),
+                        onCreate: (name) async {
+                          final db = ref.read(databaseProvider);
+                          return db.into(db.brands).insert(BrandsCompanion.insert(name: name));
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: BrandUnitPicker(
+                        label: 'وحدة القياس',
+                        icon: LucideIcons.ruler,
+                        options: [for (final u in units) (id: u.id, name: u.name)],
+                        selectedId: _selectedUnitId,
+                        onChanged: (v) => setState(() => _selectedUnitId = v),
+                        onCreate: (name) async {
+                          final db = ref.read(databaseProvider);
+                          return db.into(db.units).insert(UnitsCompanion.insert(name: name));
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
                       child: TextFormField(
                         controller: _purchasePriceController,
                         keyboardType: TextInputType.number,
@@ -1436,6 +1588,8 @@ class _AddProductDialogState extends ConsumerState<AddProductDialog> {
   final _minQtyController = TextEditingController(text: '5');
   final _categoryController = TextEditingController();
   int? _selectedCategoryId;
+  int? _selectedBrandId;
+  int? _selectedUnitId;
   bool _isLoading = false;
   late final BarcodeScannerHandler _dialogScanner;
 
@@ -1511,6 +1665,8 @@ class _AddProductDialogState extends ConsumerState<AddProductDialog> {
             ? null
             : _barcodeController.text.trim(),
         categoryId: categoryId,
+        brandId: _selectedBrandId,
+        unitId: _selectedUnitId,
         purchasePrice:
             double.tryParse(_purchasePriceController.text.trim()) ?? 0.0,
         retailPrice: double.tryParse(_retailPriceController.text.trim()) ?? 0.0,
@@ -1552,6 +1708,8 @@ class _AddProductDialogState extends ConsumerState<AddProductDialog> {
   @override
   Widget build(BuildContext context) {
     final categoriesAsync = ref.watch(categoriesStreamProvider);
+    final brands = ref.watch(brandsStreamProvider).value ?? [];
+    final units = ref.watch(unitsStreamProvider).value ?? [];
 
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -1697,6 +1855,38 @@ class _AddProductDialogState extends ConsumerState<AddProductDialog> {
                       border: OutlineInputBorder(),
                     ),
                   ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: BrandUnitPicker(
+                        label: 'العلامة التجارية',
+                        icon: LucideIcons.tag,
+                        options: [for (final b in brands) (id: b.id, name: b.name)],
+                        selectedId: _selectedBrandId,
+                        onChanged: (v) => setState(() => _selectedBrandId = v),
+                        onCreate: (name) async {
+                          final db = ref.read(databaseProvider);
+                          return db.into(db.brands).insert(BrandsCompanion.insert(name: name));
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: BrandUnitPicker(
+                        label: 'وحدة القياس',
+                        icon: LucideIcons.ruler,
+                        options: [for (final u in units) (id: u.id, name: u.name)],
+                        selectedId: _selectedUnitId,
+                        onChanged: (v) => setState(() => _selectedUnitId = v),
+                        onCreate: (name) async {
+                          final db = ref.read(databaseProvider);
+                          return db.into(db.units).insert(UnitsCompanion.insert(name: name));
+                        },
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 12),
                 Row(

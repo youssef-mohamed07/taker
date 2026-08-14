@@ -1,19 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/di/providers.dart';
+import '../../../../core/auth/auth_service.dart';
+import '../../../../core/database/db_helpers.dart';
 
-class LoginView extends StatefulWidget {
+class LoginView extends ConsumerStatefulWidget {
   const LoginView({super.key});
 
   @override
-  State<LoginView> createState() => _LoginViewState();
+  ConsumerState<LoginView> createState() => _LoginViewState();
 }
 
-class _LoginViewState extends State<LoginView> {
-  final _usernameController = TextEditingController(text: 'admin');
-  final _passwordController = TextEditingController(text: 'admin123');
+class _LoginViewState extends ConsumerState<LoginView> {
+  final _usernameController = TextEditingController();
+  final _passwordController = TextEditingController();
   final _usernameFocus = FocusNode();
   final _passwordFocus = FocusNode();
   bool _obscurePassword = true;
@@ -34,13 +38,39 @@ class _LoginViewState extends State<LoginView> {
   }
 
   Future<void> _login() async {
+    if (_isLoading) return;
     setState(() => _isLoading = true);
-    // TODO: Validate against DB
-    await Future.delayed(const Duration(milliseconds: 500));
-    if (mounted) {
+    final db = ref.read(databaseProvider);
+    final user = await AuthService.authenticate(
+      db,
+      _usernameController.text,
+      _passwordController.text,
+    );
+    if (!mounted) return;
+    if (user == null) {
       setState(() => _isLoading = false);
-      context.go('/dashboard');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'اسم المستخدم أو كلمة المرور غير صحيحة',
+            style: TextStyle(fontFamily: 'Cairo'),
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
     }
+    ref.read(currentUserIdProvider.notifier).state = user.id;
+    ref.read(currentUserProvider.notifier).state = user;
+    await AuthService.persistSession(user.id);
+    await DbHelpers.logAudit(
+      db,
+      userId: user.id,
+      action: 'LOGIN',
+      targetTable: 'auth',
+      details: 'تسجيل دخول',
+    );
+    if (mounted) context.go('/dashboard');
   }
 
   @override

@@ -258,7 +258,7 @@ class _NewPurchaseInvoiceDialogState extends ConsumerState<NewPurchaseInvoiceDia
                               total: subtotal,
                               paid: paid,
                               paymentMethod: 'cash',
-                              userId: 1,
+                              userId: ref.read(currentUserIdProvider) ?? 1,
                             );
                             if (context.mounted) {
                               Navigator.pop(context);
@@ -436,8 +436,7 @@ class CartItemRow extends StatefulWidget {
 class _CartItemRowState extends State<CartItemRow> {
   late TextEditingController _qtyController;
   late TextEditingController _priceController;
-
-
+  DateTime? _expiryDate;
 
   @override
   void didUpdateWidget(CartItemRow oldWidget) {
@@ -448,6 +447,9 @@ class _CartItemRowState extends State<CartItemRow> {
     if (oldWidget.item.purchasePrice != widget.item.purchasePrice) {
       _priceController.text = widget.item.purchasePrice.toString();
     }
+    if (oldWidget.item.expiryDate != widget.item.expiryDate) {
+      _expiryDate = widget.item.expiryDate;
+    }
   }
 
   @override
@@ -457,29 +459,24 @@ class _CartItemRowState extends State<CartItemRow> {
     super.dispose();
   }
 
-  DateTime? _expiryDate;
-
   @override
   void initState() {
     super.initState();
     _qtyController = TextEditingController(text: widget.item.quantity.toString());
     _priceController = TextEditingController(text: widget.item.purchasePrice.toString());
-    
+    _expiryDate = widget.item.expiryDate;
   }
 
   void _updateItem() {
     final q = double.tryParse(_qtyController.text) ?? widget.item.quantity;
     final p = double.tryParse(_priceController.text) ?? widget.item.purchasePrice;
-    
-    if (q != widget.item.quantity || p != widget.item.purchasePrice ) {
-      widget.onChanged(PurchaseCartItem(
-        product: widget.item.product,
-        quantity: q,
-        purchasePrice: p,
-        
-        
-      ));
-    }
+
+    widget.onChanged(PurchaseCartItem(
+      product: widget.item.product,
+      quantity: q,
+      purchasePrice: p,
+      expiryDate: _expiryDate,
+    ));
   }
 
   Future<void> _pickExpiryDate() async {

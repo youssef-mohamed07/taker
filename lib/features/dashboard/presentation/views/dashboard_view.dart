@@ -7,6 +7,7 @@ import 'package:intl/intl.dart' as intl;
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/di/providers.dart';
 import '../../../../core/database/app_database.dart';
+import '../../../products/presentation/views/products_view.dart';
 
 class DashboardView extends ConsumerWidget {
   const DashboardView({super.key});
@@ -19,7 +20,10 @@ class DashboardView extends ConsumerWidget {
     final suppliersAsync = ref.watch(suppliersStreamProvider);
     final customersList = customersAsync.value ?? [];
 
-    final invoices = salesInvoicesAsync.value ?? [];
+    final invoices = (salesInvoicesAsync.value ?? [])
+        .where((i) => i.status != 'voided')
+        .toList();
+    final invoiceItems = ref.watch(invoiceItemsStreamProvider).value ?? [];
     final products = productsAsync.value ?? [];
     final customers = customersAsync.value ?? [];
     final suppliers = suppliersAsync.value ?? [];
@@ -35,8 +39,13 @@ class DashboardView extends ConsumerWidget {
     final todaySales = todayInvoices.fold<double>(0, (sum, i) => sum + i.total);
     final monthSales = monthInvoices.fold<double>(0, (sum, i) => sum + i.total);
 
-    // Estimated profit (total sales - estimated cost 70%)
-    final totalProfits = monthInvoices.fold<double>(0, (sum, i) => sum + (i.total - i.subtotal * 0.7));
+    // Real profit from invoice items of this month's non-voided invoices.
+    final monthInvoiceIds = monthInvoices.map((i) => i.id).toSet();
+    double totalProfits = 0.0;
+    for (final item in invoiceItems) {
+      if (!monthInvoiceIds.contains(item.invoiceId)) continue;
+      totalProfits += item.total - (item.costPrice * item.quantity);
+    }
 
     // Inventory Value
     final inventoryValue = products.fold<double>(
@@ -46,6 +55,14 @@ class DashboardView extends ConsumerWidget {
 
     // Low stock items
     final lowStockProducts = products.where((p) => p.currentQuantity <= (p.minQuantity > 0 ? p.minQuantity : 5)).toList();
+
+    // Batches expired or expiring within 90 days
+    final batches = ref.watch(productBatchesStreamProvider).value ?? [];
+    final expiryHorizon = now.add(const Duration(days: 90));
+    final expiringCount = batches.where((b) {
+      final expiry = b.expiryDate;
+      return b.quantity > 0 && expiry != null && !expiry.isAfter(expiryHorizon);
+    }).length;
 
     // Last 7 days sales breakdown
     final Map<String, double> last7DaysSales = {};
@@ -108,7 +125,10 @@ class DashboardView extends ConsumerWidget {
                   LucideIcons.plus,
                   'منتج جديد',
                   AppColors.success,
-                  () => context.push('/products/add'),
+                  () => showDialog(
+                    context: context,
+                    builder: (_) => const AddProductDialog(),
+                  ),
                 ),
               ],
             ),
@@ -139,7 +159,7 @@ class DashboardView extends ConsumerWidget {
                 SizedBox(width: 16.w),
                 Expanded(
                   child: _buildKpiCard(context, 
-                    'الأرباح التقديرية',
+                    'الأرباح الفعلية',
                     totalProfits.toStringAsFixed(2),
                     'ج.م',
                     LucideIcons.dollarSign,
@@ -222,7 +242,13 @@ class DashboardView extends ConsumerWidget {
                 ),
                 SizedBox(width: 16.w),
                 // Alerts
-                Expanded(child: _buildAlertsCard(context, lowStockProducts)),
+                Expanded(
+                  child: _buildAlertsCard(
+                    context,
+                    lowStockProducts,
+                    expiringCount: expiringCount,
+                  ),
+                ),
               ],
             ),
             SizedBox(height: 24.h),
@@ -335,15 +361,18 @@ class DashboardView extends ConsumerWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              FittedBox(
-                fit: BoxFit.scaleDown,
-                child: Text(
-                  value,
-                  style: TextStyle(
-                    fontSize: 28.sp,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.black,
-                    fontFamily: 'Cairo',
+              Flexible(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: AlignmentDirectional.centerStart,
+                  child: Text(
+                    value,
+                    style: TextStyle(
+                      fontSize: 28.sp,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.black,
+                      fontFamily: 'Cairo',
+                    ),
                   ),
                 ),
               ),
@@ -456,21 +485,28 @@ class DashboardView extends ConsumerWidget {
           Expanded(
             child: LayoutBuilder(
               builder: (context, constraints) {
-                final availableBarHeight = (constraints.maxHeight - 54).clamp(10.0, constraints.maxHeight);
+                // Space consumed by the value label, day label and paddings.
+                // Labels use height: 1.0 so their rendered height equals fontSize.
+                final labelSpace = (16.sp + 6.h) + (8.h + 16.sp) + 4;
+                final availableBarHeight =
+                    (constraints.maxHeight - labelSpace).clamp(10.0, constraints.maxHeight);
                 return Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: salesData.entries.map((entry) {
                     final heightFactor = (entry.value / maxSale).clamp(0.05, 1.0);
-                    final barHeight = availableBarHeight * heightFactor;
+                    final barHeight =
+                        availableBarHeight * heightFactor;
 
                     return Column(
                       mainAxisAlignment: MainAxisAlignment.end,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
                           entry.value > 0 ? entry.value.toStringAsFixed(0) : '0',
                           style: TextStyle(
                             fontSize: 16.sp,
+                            height: 1.0,
                             color: Colors.black,
                             fontWeight: FontWeight.bold,
                           ),
@@ -479,7 +515,7 @@ class DashboardView extends ConsumerWidget {
                         AnimatedContainer(
                           duration: const Duration(milliseconds: 500),
                           width: 32.w,
-                          height: barHeight,
+                          height: barHeight.clamp(0.0, constraints.maxHeight),
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
                               colors: [
@@ -497,6 +533,7 @@ class DashboardView extends ConsumerWidget {
                           entry.key,
                           style: TextStyle(
                             fontSize: 16.sp,
+                            height: 1.0,
                             color: Colors.black,
                             fontFamily: 'Cairo',
                           ),
@@ -513,7 +550,12 @@ class DashboardView extends ConsumerWidget {
     );
   }
 
-  Widget _buildAlertsCard(BuildContext context, List<Product> lowStockProducts) {
+  Widget _buildAlertsCard(
+    BuildContext context,
+    List<Product> lowStockProducts, {
+    int expiringCount = 0,
+  }) {
+    final totalAlerts = lowStockProducts.length + expiringCount;
     return Container(
       height: 320.h,
       padding: EdgeInsets.all(20.w),
@@ -529,26 +571,29 @@ class DashboardView extends ConsumerWidget {
             children: [
               Icon(LucideIcons.bell, size: 24, color: AppColors.warning),
               SizedBox(width: 8.w),
-              Text(
-                'تنبيهات النظام',
-                style: TextStyle(
-                  fontSize: 22.sp,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black,
-                  fontFamily: 'Cairo',
+              Flexible(
+                child: Text(
+                  'تنبيهات النظام',
+                  style: TextStyle(
+                    fontSize: 22.sp,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black,
+                    fontFamily: 'Cairo',
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
               const Spacer(),
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
                 decoration: BoxDecoration(
-                  color: lowStockProducts.isEmpty ? AppColors.successLight : AppColors.errorLight,
+                  color: totalAlerts == 0 ? AppColors.successLight : AppColors.errorLight,
                   borderRadius: BorderRadius.circular(10.r),
                 ),
                 child: Text(
-                  '${lowStockProducts.length}',
+                  '$totalAlerts',
                   style: TextStyle(
-                    color: lowStockProducts.isEmpty ? AppColors.success : AppColors.error,
+                    color: totalAlerts == 0 ? AppColors.success : AppColors.error,
                     fontSize: 18.sp,
                     fontWeight: FontWeight.w600,
                   ),
@@ -558,7 +603,7 @@ class DashboardView extends ConsumerWidget {
           ),
           SizedBox(height: 16.h),
           Expanded(
-            child: lowStockProducts.isEmpty
+            child: totalAlerts == 0
                 ? Center(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
@@ -581,10 +626,35 @@ class DashboardView extends ConsumerWidget {
                     ),
                   )
                 : ListView.separated(
-                    itemCount: lowStockProducts.length,
+                    itemCount: lowStockProducts.length + (expiringCount > 0 ? 1 : 0),
                     separatorBuilder: (_, __) => Divider(height: 1.h),
                     itemBuilder: (context, index) {
-                      final item = lowStockProducts[index];
+                      if (expiringCount > 0 && index == 0) {
+                        return ListTile(
+                          dense: true,
+                          contentPadding: EdgeInsets.zero,
+                          onTap: () => context.go('/expiration-alerts'),
+                          leading: Icon(LucideIcons.alarmClock, color: AppColors.warning, size: 18),
+                          title: Text(
+                            'أصناف قريبة من انتهاء الصلاحية',
+                            style: TextStyle(
+                              fontFamily: 'Cairo',
+                              fontWeight: FontWeight.bold,
+                              fontSize: 20.sp,
+                              color: Colors.black,
+                            ),
+                          ),
+                          subtitle: Text(
+                            '$expiringCount تشغيلة تنتهي خلال 90 يوماً - انقر للتفاصيل',
+                            style: TextStyle(
+                              fontFamily: 'Cairo',
+                              fontSize: 18.sp,
+                              color: Colors.black87,
+                            ),
+                          ),
+                        );
+                      }
+                      final item = lowStockProducts[index - (expiringCount > 0 ? 1 : 0)];
                       return ListTile(
                         dense: true,
                         contentPadding: EdgeInsets.zero,

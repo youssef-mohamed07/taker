@@ -6,6 +6,8 @@ import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../theme/app_colors.dart';
 import '../../di/providers.dart';
+import '../../auth/auth_service.dart';
+import '../../database/db_helpers.dart';
 
 /// Main app shell with sidebar navigation
 class AppShell extends ConsumerWidget {
@@ -84,6 +86,55 @@ class AppShell extends ConsumerWidget {
   }
 
   Widget _buildSidebarContent(BuildContext context, WidgetRef ref, bool isCollapsed, String currentPath) {
+    final user = ref.watch(currentUserProvider);
+    final perms = ref.watch(permissionsProvider).value ?? [];
+    bool allowed(String module) =>
+        AuthService.hasPermission(user, perms, module, 'view');
+
+    final List<Widget> navChildren = [];
+    void section(String title) =>
+        navChildren.add(_buildSectionHeader(context, title, isCollapsed));
+    void item(IconData icon, String label, String path,
+        {bool isFullScreen = false}) {
+      final module = path.replaceFirst('/', '');
+      if (!allowed(module)) return;
+      navChildren.add(_buildNavItem(
+        context,
+        icon: icon,
+        label: label,
+        path: path,
+        currentPath: currentPath,
+        isCollapsed: isCollapsed,
+        isFullScreen: isFullScreen,
+      ));
+    }
+
+    item(LucideIcons.layoutDashboard, 'لوحة التحكم', '/dashboard');
+    section('المبيعات');
+    item(LucideIcons.monitor, 'نقطة البيع', '/pos', isFullScreen: true);
+    item(LucideIcons.fileText, 'فواتير المبيعات', '/sales-history');
+    item(LucideIcons.users, 'العملاء', '/customers');
+    section('المخزون');
+    item(LucideIcons.box, 'المنتجات', '/products');
+    item(LucideIcons.tags, 'التصنيفات', '/categories');
+    item(LucideIcons.refreshCcw, 'المرتجعات', '/returns');
+    item(LucideIcons.shoppingCart, 'المشتريات', '/purchases');
+    item(LucideIcons.fileText, 'فواتير المشتريات', '/purchase-history');
+    item(LucideIcons.warehouse, 'المخزن', '/inventory');
+    item(LucideIcons.clipboardCheck, 'جرد المخزون', '/inventory-count');
+    item(LucideIcons.alarmClock, 'تنبيهات الصلاحية', '/expiration-alerts');
+    item(LucideIcons.truck, 'الموردون', '/suppliers');
+    section('المالية');
+    item(LucideIcons.wallet, 'الخزنة', '/treasury');
+    item(LucideIcons.receipt, 'المصروفات', '/expenses');
+    item(LucideIcons.clock, 'الشيفتات', '/shifts');
+    item(LucideIcons.users2, 'الشركاء', '/partners');
+    section('النظام');
+    item(LucideIcons.barChart3, 'التقارير', '/reports');
+    item(LucideIcons.settings, 'الإعدادات', '/settings');
+    item(LucideIcons.userCog, 'المستخدمين', '/users');
+    item(LucideIcons.fileText, 'سجل العمليات', '/audit');
+
     return Column(
       children: [
         // Logo / Header
@@ -95,175 +146,7 @@ class AppShell extends ConsumerWidget {
         Expanded(
           child: SingleChildScrollView(
             padding: EdgeInsets.symmetric(horizontal: 8.w),
-            child: Column(
-              children: [
-                _buildNavItem(
-                  context,
-                  icon: LucideIcons.layoutDashboard,
-                  label: 'لوحة التحكم',
-                  path: '/dashboard',
-                  currentPath: currentPath,
-                  isCollapsed: isCollapsed,
-                ),
-                _buildSectionHeader(context, 'المبيعات', isCollapsed),
-                _buildNavItem(
-                  context,
-                  icon: LucideIcons.monitor,
-                  label: 'نقطة البيع',
-                  path: '/pos',
-                  currentPath: currentPath,
-                  isCollapsed: isCollapsed,
-                  isFullScreen: true,
-                ),
-                _buildNavItem(
-                  context,
-                  icon: LucideIcons.fileText,
-                  label: 'فواتير المبيعات',
-                  path: '/sales-history',
-                  currentPath: currentPath,
-                  isCollapsed: isCollapsed,
-                ),
-                _buildNavItem(
-                  context,
-                  icon: LucideIcons.users,
-                  label: 'العملاء',
-                  path: '/customers',
-                  currentPath: currentPath,
-                  isCollapsed: isCollapsed,
-                ),
-                _buildSectionHeader(context, 'المخزون', isCollapsed),
-                _buildNavItem(
-                  context,
-                  icon: LucideIcons.box,
-                  label: 'المنتجات',
-                  path: '/products',
-                  currentPath: currentPath,
-                  isCollapsed: isCollapsed,
-                ),
-                _buildNavItem(
-                  context,
-                  icon: LucideIcons.tags,
-                  label: 'التصنيفات',
-                  path: '/categories',
-                  currentPath: currentPath,
-                  isCollapsed: isCollapsed,
-                ),
-                _buildNavItem(
-                  context,
-                  icon: LucideIcons.refreshCcw,
-                  label: 'المرتجعات',
-                  path: '/returns',
-                  currentPath: currentPath,
-                  isCollapsed: isCollapsed,
-                ),
-                _buildNavItem(
-                  context,
-                  icon: LucideIcons.shoppingCart,
-                  label: 'المشتريات',
-                  path: '/purchases',
-                  currentPath: currentPath,
-                  isCollapsed: isCollapsed,
-                ),
-                _buildNavItem(
-                  context,
-                  icon: LucideIcons.fileText,
-                  label: 'فواتير المشتريات',
-                  path: '/purchase-history',
-                  currentPath: currentPath,
-                  isCollapsed: isCollapsed,
-                ),
-                _buildNavItem(
-                  context,
-                  icon: LucideIcons.warehouse,
-                  label: 'المخزن',
-                  path: '/inventory',
-                  currentPath: currentPath,
-                  isCollapsed: isCollapsed,
-                ),
-                _buildNavItem(
-                  context,
-                  icon: LucideIcons.clipboardCheck,
-                  label: 'جرد المخزون',
-                  path: '/inventory-count',
-                  currentPath: currentPath,
-                  isCollapsed: isCollapsed,
-                ),
-                _buildNavItem(
-                  context,
-                  icon: LucideIcons.truck,
-                  label: 'الموردون',
-                  path: '/suppliers',
-                  currentPath: currentPath,
-                  isCollapsed: isCollapsed,
-                ),
-                _buildSectionHeader(context, 'المالية', isCollapsed),
-                _buildNavItem(
-                  context,
-                  icon: LucideIcons.wallet,
-                  label: 'الخزنة',
-                  path: '/treasury',
-                  currentPath: currentPath,
-                  isCollapsed: isCollapsed,
-                ),
-                _buildNavItem(
-                  context,
-                  icon: LucideIcons.receipt,
-                  label: 'المصروفات',
-                  path: '/expenses',
-                  currentPath: currentPath,
-                  isCollapsed: isCollapsed,
-                ),
-                _buildNavItem(
-                  context,
-                  icon: LucideIcons.clock,
-                  label: 'الشيفتات',
-                  path: '/shifts',
-                  currentPath: currentPath,
-                  isCollapsed: isCollapsed,
-                ),
-                _buildNavItem(
-                  context,
-                  icon: LucideIcons.users2,
-                  label: 'الشركاء',
-                  path: '/partners',
-                  currentPath: currentPath,
-                  isCollapsed: isCollapsed,
-                ),
-                _buildSectionHeader(context, 'النظام', isCollapsed),
-                _buildNavItem(
-                  context,
-                  icon: LucideIcons.barChart3,
-                  label: 'التقارير',
-                  path: '/reports',
-                  currentPath: currentPath,
-                  isCollapsed: isCollapsed,
-                ),
-                _buildNavItem(
-                  context,
-                  icon: LucideIcons.settings,
-                  label: 'الإعدادات',
-                  path: '/settings',
-                  currentPath: currentPath,
-                  isCollapsed: isCollapsed,
-                ),
-                _buildNavItem(
-                  context,
-                  icon: LucideIcons.userCog,
-                  label: 'المستخدمين',
-                  path: '/users',
-                  currentPath: currentPath,
-                  isCollapsed: isCollapsed,
-                ),
-                _buildNavItem(
-                  context,
-                  icon: LucideIcons.fileText,
-                  label: 'سجل العمليات',
-                  path: '/audit',
-                  currentPath: currentPath,
-                  isCollapsed: isCollapsed,
-                ),
-              ],
-            ),
+            child: Column(children: navChildren),
           ),
         ),
 
@@ -280,6 +163,7 @@ class AppShell extends ConsumerWidget {
   }
 
   Widget _buildHeader(BuildContext context, bool isCollapsed, WidgetRef ref) {
+    final user = ref.watch(currentUserProvider);
     return Container(
       height: 64.h,
       padding: EdgeInsets.symmetric(horizontal: 16.w),
@@ -310,19 +194,84 @@ class AppShell extends ConsumerWidget {
           ),
           if (!isCollapsed) ...[
             SizedBox(width: 12.w),
-            Text(
-              'تاجر',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 24.sp,
-                fontWeight: FontWeight.w700,
-                fontFamily: 'Cairo',
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'تاجر',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 20.sp,
+                      fontWeight: FontWeight.w700,
+                      fontFamily: 'Cairo',
+                    ),
+                  ),
+                  if (user != null)
+                    Text(
+                      '${user.fullName} (${_roleLabel(user.role)})',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: AppColors.sidebarIcon,
+                        fontSize: 11.sp,
+                        fontFamily: 'Cairo',
+                      ),
+                    ),
+                ],
               ),
             ),
+            IconButton(
+              tooltip: 'تسجيل الخروج',
+              onPressed: () => _logout(context, ref),
+              icon: Icon(LucideIcons.logOut, color: AppColors.sidebarIcon, size: 20),
+            ),
           ],
+          if (isCollapsed)
+            IconButton(
+              tooltip: 'تسجيل الخروج',
+              onPressed: () => _logout(context, ref),
+              icon: Icon(LucideIcons.logOut, color: AppColors.sidebarIcon, size: 20),
+            ),
         ],
       ),
     );
+  }
+
+  String _roleLabel(String role) {
+    switch (role) {
+      case 'admin':
+        return 'مدير';
+      case 'accountant':
+        return 'محاسب';
+      case 'cashier':
+        return 'كاشير';
+      case 'storekeeper':
+        return 'أمين مخزن';
+      default:
+        return role;
+    }
+  }
+
+  Future<void> _logout(BuildContext context, WidgetRef ref) async {
+    final db = ref.read(databaseProvider);
+    final uid = ref.read(currentUserIdProvider);
+    if (uid != null) {
+      await DbHelpers.logAudit(
+        db,
+        userId: uid,
+        action: 'LOGOUT',
+        targetTable: 'auth',
+        details: 'تسجيل خروج',
+      );
+    }
+    await AuthService.clearSession();
+    ref.read(currentUserIdProvider.notifier).state = null;
+    ref.read(currentUserProvider.notifier).state = null;
+    if (context.mounted) context.go('/login');
   }
 
   Widget _buildSectionHeader(BuildContext context, String title, bool isCollapsed) {

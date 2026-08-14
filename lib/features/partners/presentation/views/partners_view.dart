@@ -7,6 +7,7 @@ import 'package:intl/intl.dart' as intl;
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/di/providers.dart';
 import '../../../../core/database/app_database.dart';
+import '../../../../core/database/db_helpers.dart';
 
 class PartnersView extends ConsumerStatefulWidget {
   const PartnersView({super.key});
@@ -173,6 +174,16 @@ class _PartnersViewState extends ConsumerState<PartnersView> {
                                 ),
                                 SizedBox(width: 12.w),
                                 IconButton(
+                                  icon: Icon(LucideIcons.coins, color: AppColors.success, size: 18),
+                                  tooltip: 'توزيع أرباح',
+                                  onPressed: () => _showProfitDialog(context, db, p),
+                                ),
+                                IconButton(
+                                  icon: Icon(LucideIcons.wallet, color: AppColors.warning, size: 18),
+                                  tooltip: 'سحب من الشريك',
+                                  onPressed: () => _showWithdrawDialog(context, db, p),
+                                ),
+                                IconButton(
                                   icon: Icon(LucideIcons.trash2, color: AppColors.error, size: 18),
                                   onPressed: () async {
                                     final confirm = await showDialog<bool>(
@@ -204,6 +215,170 @@ class _PartnersViewState extends ConsumerState<PartnersView> {
                         },
                       ),
               ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showProfitDialog(BuildContext context, AppDatabase db, Partner partner) {
+    final amountController = TextEditingController();
+    final periodController = TextEditingController(text: intl.DateFormat('yyyy-MM').format(DateTime.now()));
+
+    showDialog(
+      context: context,
+      builder: (dialogCtx) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          title: Row(
+            children: [
+              Icon(LucideIcons.coins, color: AppColors.success),
+              SizedBox(width: 8.w),
+              Text('توزيع أرباح: ${partner.name}', style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold)),
+            ],
+          ),
+          content: SizedBox(
+            width: 420.w,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: periodController,
+                  decoration: const InputDecoration(
+                    labelText: 'الفترة (مثال: 2026-01)',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                SizedBox(height: 16.h),
+                TextField(
+                  controller: amountController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'مبلغ الأرباح (ج.م)',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogCtx),
+              child: Text('إلغاء', style: TextStyle(fontFamily: 'Cairo', color: AppColors.textSecondary)),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: AppColors.success),
+              onPressed: () async {
+                final amount = double.tryParse(amountController.text) ?? 0;
+                final period = periodController.text.trim();
+                if (amount <= 0 || period.isEmpty) return;
+                final uid = ref.read(currentUserIdProvider) ?? 1;
+
+                await db.into(db.partnerProfits).insert(
+                      PartnerProfitsCompanion.insert(
+                        partnerId: partner.id,
+                        period: period,
+                        amount: amount,
+                      ),
+                    );
+                await DbHelpers.addTreasuryTransaction(
+                  db,
+                  type: 'EXPENSE',
+                  amount: amount,
+                  userId: uid,
+                  description: 'توزيع أرباح الشريك ${partner.name} عن فترة $period',
+                );
+                if (dialogCtx.mounted) {
+                  Navigator.pop(dialogCtx);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('تم توزيع أرباح بمبلغ ${amount.toStringAsFixed(2)} ج.م'), backgroundColor: AppColors.success),
+                  );
+                }
+              },
+              child: Text('توزيع الأرباح', style: TextStyle(fontFamily: 'Cairo', color: Colors.white, fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showWithdrawDialog(BuildContext context, AppDatabase db, Partner partner) {
+    final amountController = TextEditingController();
+    final descController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (dialogCtx) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          title: Row(
+            children: [
+              Icon(LucideIcons.wallet, color: AppColors.warning),
+              SizedBox(width: 8.w),
+              Text('سحب من الشريك: ${partner.name}', style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold)),
+            ],
+          ),
+          content: SizedBox(
+            width: 420.w,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: amountController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'مبلغ السحب (ج.م)',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                SizedBox(height: 16.h),
+                TextField(
+                  controller: descController,
+                  decoration: const InputDecoration(
+                    labelText: 'البيان (اختياري)',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogCtx),
+              child: Text('إلغاء', style: TextStyle(fontFamily: 'Cairo', color: AppColors.textSecondary)),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: AppColors.warning),
+              onPressed: () async {
+                final amount = double.tryParse(amountController.text) ?? 0;
+                if (amount <= 0) return;
+                final desc = descController.text.trim();
+                final uid = ref.read(currentUserIdProvider) ?? 1;
+
+                await db.into(db.partnerWithdrawals).insert(
+                      PartnerWithdrawalsCompanion.insert(
+                        partnerId: partner.id,
+                        amount: amount,
+                        description: drift.Value(desc.isEmpty ? null : desc),
+                      ),
+                    );
+                await DbHelpers.addTreasuryTransaction(
+                  db,
+                  type: 'EXPENSE',
+                  amount: amount,
+                  userId: uid,
+                  description: 'سحب الشريك ${partner.name}${desc.isNotEmpty ? ' - $desc' : ''}',
+                );
+                if (dialogCtx.mounted) {
+                  Navigator.pop(dialogCtx);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('تم تسجيل سحب بمبلغ ${amount.toStringAsFixed(2)} ج.م'), backgroundColor: AppColors.success),
+                  );
+                }
+              },
+              child: Text('تسجيل السحب', style: TextStyle(fontFamily: 'Cairo', color: Colors.white, fontWeight: FontWeight.bold)),
             ),
           ],
         ),

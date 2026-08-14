@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:drift/drift.dart' as drift;
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/database/app_database.dart';
+import '../../../../core/database/db_helpers.dart';
 import '../../../../core/di/providers.dart';
 
 class InventoryCountView extends ConsumerStatefulWidget {
@@ -853,7 +854,7 @@ class _NewInventoryCountDialogState
                 name: _nameController.text,
                 type: _type,
                 status: const drift.Value('completed'),
-                userId: 1,
+                userId: ref.read(currentUserIdProvider) ?? 1,
                 completedAt: drift.Value(DateTime.now()),
               ),
             );
@@ -890,7 +891,7 @@ class _NewInventoryCountDialogState
                     quantity: diff.abs(),
                     referenceType: const drift.Value('inventory_count'),
                     referenceId: drift.Value(countId),
-                    userId: 1,
+                    userId: ref.read(currentUserIdProvider) ?? 1,
                     notes: drift.Value(
                       diff > 0 ? 'فائض جرد مخزني' : 'عجز جرد مخزني',
                     ),
@@ -898,6 +899,15 @@ class _NewInventoryCountDialogState
                 );
           }
         }
+
+        await DbHelpers.logAudit(
+          db,
+          userId: ref.read(currentUserIdProvider) ?? 1,
+          action: 'APPROVE',
+          targetTable: 'inventory_counts',
+          recordId: countId,
+          details: 'اعتماد جرد مخزني: ${_nameController.text}',
+        );
       });
 
       if (mounted) {

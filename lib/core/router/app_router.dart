@@ -3,12 +3,12 @@ import '../../features/users/presentation/views/users_view.dart';
 import '../../features/finance/presentation/views/expenses_view.dart';
 import '../../features/sales_history/presentation/views/sales_history_view.dart';
 import '../../features/purchases/presentation/views/purchase_history_view.dart';
+import '../../features/reports/presentation/views/expiration_alerts_view.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../features/auth/presentation/views/login_view.dart';
 import '../../features/dashboard/presentation/views/dashboard_view.dart';
 import '../../features/products/presentation/views/products_view.dart';
-import '../../features/products/presentation/views/product_form_view.dart';
 import '../../features/products/presentation/views/categories_view.dart';
 import '../../features/pos/presentation/views/pos_view.dart';
 import '../../features/purchases/presentation/views/purchases_view.dart';
@@ -24,6 +24,8 @@ import '../../features/audit/presentation/views/audit_view.dart';
 import '../../features/returns/presentation/views/returns_view.dart';
 
 import '../common/widgets/app_shell.dart';
+import '../auth/auth_service.dart';
+import '../di/providers.dart';
 
 class AppRouter {
   AppRouter._();
@@ -34,6 +36,24 @@ class AppRouter {
   static final router = GoRouter(
     navigatorKey: _rootNavigatorKey,
     initialLocation: '/login',
+    redirect: (context, state) async {
+      final path = state.uri.path;
+      final user = appContainer.read(currentUserProvider);
+      if (user == null) {
+        return path == '/login' ? null : '/login';
+      }
+      if (path == '/login') return '/dashboard';
+      final segments = path.split('/').where((s) => s.isNotEmpty).toList();
+      final module = segments.isEmpty ? 'dashboard' : segments.first;
+      final db = appContainer.read(databaseProvider);
+      final perms = await (db.select(db.permissions)
+            ..where((t) => t.userId.equals(user.id)))
+          .get();
+      if (!AuthService.hasPermission(user, perms, module, 'view')) {
+        return '/dashboard';
+      }
+      return null;
+    },
     routes: [
       // Login (no shell)
       GoRoute(path: '/login', builder: (context, state) => const LoginView()),
@@ -56,16 +76,6 @@ class AppRouter {
             path: '/products',
             pageBuilder: (context, state) =>
                 const NoTransitionPage(child: ProductsView()),
-          ),
-          GoRoute(
-            path: '/products/add',
-            builder: (context, state) => const ProductFormView(),
-          ),
-          GoRoute(
-            path: '/products/edit/:id',
-            builder: (context, state) => ProductFormView(
-              productId: int.tryParse(state.pathParameters['id'] ?? ''),
-            ),
           ),
           GoRoute(
             path: '/categories',
@@ -153,6 +163,11 @@ class AppRouter {
             path: '/purchase-history',
             pageBuilder: (context, state) =>
                 const NoTransitionPage(child: PurchaseHistoryView()),
+          ),
+          GoRoute(
+            path: '/expiration-alerts',
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: ExpirationAlertsView()),
           ),
         ],
       ),

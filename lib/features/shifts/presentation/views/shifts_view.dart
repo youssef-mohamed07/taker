@@ -27,8 +27,10 @@ class _ShiftsViewState extends ConsumerState<ShiftsView> {
     final openShift = shifts.where((s) => s.status == 'open').firstOrNull;
     final allTxs = txsAsync.value ?? [];
 
-    double shiftIncome = 0.0;
-    double shiftExpense = 0.0;
+    double shiftIncomeCash = 0.0;
+    double shiftExpenseCash = 0.0;
+    double shiftCardNet = 0.0;
+    double shiftFawryNet = 0.0;
     double expectedTreasury = 0.0;
 
     if (openShift != null) {
@@ -37,13 +39,20 @@ class _ShiftsViewState extends ConsumerState<ShiftsView> {
           (tx.createdAt.isAfter(openShift.openedAt) && tx.shiftId == null));
 
       for (final tx in shiftTxs) {
-        if (tx.type == 'INCOME' || tx.type == 'DEPOSIT') {
-          shiftIncome += tx.amount;
-        } else if (tx.type == 'EXPENSE' || tx.type == 'WITHDRAWAL') {
-          shiftExpense += tx.amount;
+        final isIn = tx.type == 'INCOME' || tx.type == 'DEPOSIT';
+        final isOut = tx.type == 'EXPENSE' || tx.type == 'WITHDRAWAL';
+        final pm = tx.paymentMethod ?? 'cash';
+        if (pm == 'card') {
+          shiftCardNet += isIn ? tx.amount : (isOut ? -tx.amount : 0);
+        } else if (pm == 'fawry') {
+          shiftFawryNet += isIn ? tx.amount : (isOut ? -tx.amount : 0);
+        } else {
+          if (isIn) shiftIncomeCash += tx.amount;
+          if (isOut) shiftExpenseCash += tx.amount;
         }
       }
-      expectedTreasury = openShift.openingBalance + shiftIncome - shiftExpense;
+      // الدرج كاش فقط: المتوقع = الافتتاحية + صافي حركات الكاش
+      expectedTreasury = openShift.openingBalance + shiftIncomeCash - shiftExpenseCash;
     }
 
     return Scaffold(
@@ -186,8 +195,8 @@ class _ShiftsViewState extends ConsumerState<ShiftsView> {
                         SizedBox(width: 12.w),
                         Expanded(
                           child: _buildMetricTile(
-                            title: 'مقبوضات الشيفت (+)',
-                            value: '${shiftIncome.toStringAsFixed(2)} ج.م',
+                            title: 'مقبوضات كاش (+)',
+                            value: '${shiftIncomeCash.toStringAsFixed(2)} ج.م',
                             icon: LucideIcons.arrowDownLeft,
                             color: AppColors.success,
                           ),
@@ -195,8 +204,8 @@ class _ShiftsViewState extends ConsumerState<ShiftsView> {
                         SizedBox(width: 12.w),
                         Expanded(
                           child: _buildMetricTile(
-                            title: 'مصروفات الشيفت (-)',
-                            value: '${shiftExpense.toStringAsFixed(2)} ج.م',
+                            title: 'مصروفات كاش (-)',
+                            value: '${shiftExpenseCash.toStringAsFixed(2)} ج.م',
                             icon: LucideIcons.arrowUpRight,
                             color: AppColors.error,
                           ),
@@ -204,12 +213,38 @@ class _ShiftsViewState extends ConsumerState<ShiftsView> {
                         SizedBox(width: 12.w),
                         Expanded(
                           child: _buildMetricTile(
-                            title: 'المتوقع بالخزنة الآن',
+                            title: 'المتوقع بدرج الكاش',
                             value: '${expectedTreasury.toStringAsFixed(2)} ج.م',
                             icon: LucideIcons.badgeCheck,
                             color: AppColors.warning,
                           ),
                         ),
+                      ],
+                    ),
+                    SizedBox(height: 12.h),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildMetricTile(
+                            title: 'صافي محفظة فيزا بالشيفت',
+                            value: '${shiftCardNet.toStringAsFixed(2)} ج.م',
+                            icon: LucideIcons.creditCard,
+                            color: AppColors.info,
+                          ),
+                        ),
+                        SizedBox(width: 12.w),
+                        Expanded(
+                          child: _buildMetricTile(
+                            title: 'صافي محفظة فوري بالشيفت',
+                            value: '${shiftFawryNet.toStringAsFixed(2)} ج.م',
+                            icon: LucideIcons.smartphone,
+                            color: AppColors.warning,
+                          ),
+                        ),
+                        SizedBox(width: 12.w),
+                        const Expanded(child: SizedBox()),
+                        SizedBox(width: 12.w),
+                        const Expanded(child: SizedBox()),
                       ],
                     ),
                   ],
@@ -497,7 +532,7 @@ class _ShiftsViewState extends ConsumerState<ShiftsView> {
                       final opening = double.tryParse(balanceController.text) ?? 0;
                       final companionNames = selectedCompanions.isNotEmpty ? selectedCompanions.join(', ') : null;
                       try {
-                        await DbHelpers.openShift(db, openingBalance: opening, userId: 1, companionNames: companionNames);
+                        await DbHelpers.openShift(db, openingBalance: opening, userId: ref.read(currentUserIdProvider) ?? 1, companionNames: companionNames);
                         if (dialogCtx.mounted) {
                           Navigator.pop(dialogCtx);
                           AppErrorHandler.showSuccessSnackBar(context, 'تم فتح الوردية بنجاح!');

@@ -24,30 +24,27 @@ class _TreasuryViewState extends ConsumerState<TreasuryView> {
     final transactionsAsync = ref.watch(treasuryTransactionsStreamProvider);
     final shiftsAsync = ref.watch(shiftsStreamProvider);
     final db = ref.watch(databaseProvider);
+    final categories = ref.watch(expenseCategoriesStreamProvider).value ?? [];
+    final categoryNames = {for (final c in categories) c.id: c.name};
 
     final transactions = transactionsAsync.value ?? [];
     final shifts = shiftsAsync.value ?? [];
     final openShift = shifts.where((s) => s.status == 'open').firstOrNull;
+    final treasuries = ref.watch(treasuryStreamProvider).value ?? [];
+    final customers = ref.watch(customersStreamProvider).value ?? [];
+
+    // درج الكاش هو الرصيد المعتمد، ومحفظتا فيزا/فوري مشتقتان من الحركات
+    final drawerBalance = treasuries.isNotEmpty ? treasuries.first.currentBalance : 0.0;
+    final cardBalance = _walletBalance(transactions, 'card');
+    final fawryBalance = _walletBalance(transactions, 'fawry');
+
+    // الشكك: أرصدة العملاء المدينة
+    final debtors = customers.where((c) => c.balance > 0).toList()
+      ..sort((a, b) => b.balance.compareTo(a.balance));
+    final totalDebts = debtors.fold<double>(0, (s, c) => s + c.balance);
 
     final now = DateTime.now();
     final todayStart = DateTime(now.year, now.month, now.day);
-
-    // Calculate totals overall
-    final totalIncomeAll = transactions
-        .where((t) {
-          final type = t.type.toUpperCase();
-          return type == 'INCOME' || type == 'SALE' || type == 'DEPOSIT' || type == 'IN';
-        })
-        .fold<double>(0, (sum, t) => sum + t.amount);
-
-    final totalExpenseAll = transactions
-        .where((t) {
-          final type = t.type.toUpperCase();
-          return type == 'EXPENSE' || type == 'PURCHASE' || type == 'WITHDRAW' || type == 'WITHDRAWAL' || type == 'OUT';
-        })
-        .fold<double>(0, (sum, t) => sum + t.amount);
-
-    final currentBalance = totalIncomeAll - totalExpenseAll;
 
     // Today's metrics
     final todayTxs = transactions.where((t) => t.createdAt.isAfter(todayStart)).toList();
@@ -133,7 +130,7 @@ class _TreasuryViewState extends ConsumerState<TreasuryView> {
                     context,
                     todayIncome: todayIncome,
                     todayExpense: todayExpense,
-                    currentBalance: currentBalance,
+                    currentBalance: drawerBalance,
                     openShift: openShift,
                   ),
                   icon: Icon(LucideIcons.fileSpreadsheet, size: 18),
@@ -173,7 +170,7 @@ class _TreasuryViewState extends ConsumerState<TreasuryView> {
             ),
             SizedBox(height: 20.h),
 
-            // Top Summary Cards
+            // Wallet Cards
             Row(
               children: [
                 Expanded(
@@ -202,7 +199,7 @@ class _TreasuryViewState extends ConsumerState<TreasuryView> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              'رصيد الخزنة الكلي الحالي',
+                              'رصيد درج الكاش الحالي',
                               style: TextStyle(
                                 color: Colors.white70,
                                 fontSize: 13.sp,
@@ -216,10 +213,10 @@ class _TreasuryViewState extends ConsumerState<TreasuryView> {
                         FittedBox(
                           fit: BoxFit.scaleDown,
                           child: Text(
-                            '${currentBalance.toStringAsFixed(2)} ج.م',
+                            '${drawerBalance.toStringAsFixed(2)} ج.م',
                             style: TextStyle(
                               color: Colors.white,
-                              fontSize: 30.sp,
+                              fontSize: 28.sp,
                               fontWeight: FontWeight.w700,
                               fontFamily: 'Cairo',
                             ),
@@ -232,21 +229,27 @@ class _TreasuryViewState extends ConsumerState<TreasuryView> {
                 SizedBox(width: 12.w),
                 Expanded(
                   flex: 2,
-                  child: _buildTodayCard(
-                    title: 'مقبوضات اليوم (+)',
-                    amount: todayIncome,
-                    color: AppColors.success,
-                    icon: LucideIcons.trendingUp,
+                  child: _buildWalletCard(
+                    title: 'محفظة فيزا / كارت',
+                    amount: cardBalance,
+                    icon: LucideIcons.creditCard,
+                    color: AppColors.info,
+                    onTransfer: cardBalance > 0.009
+                        ? () => _showTransferDialog(context, db, 'card', cardBalance)
+                        : null,
                   ),
                 ),
                 SizedBox(width: 12.w),
                 Expanded(
                   flex: 2,
-                  child: _buildTodayCard(
-                    title: 'مصروفات اليوم (-)',
-                    amount: todayExpense,
-                    color: AppColors.error,
-                    icon: LucideIcons.trendingDown,
+                  child: _buildWalletCard(
+                    title: 'محفظة فوري',
+                    amount: fawryBalance,
+                    icon: LucideIcons.smartphone,
+                    color: AppColors.warning,
+                    onTransfer: fawryBalance > 0.009
+                        ? () => _showTransferDialog(context, db, 'fawry', fawryBalance)
+                        : null,
                   ),
                 ),
                 SizedBox(width: 12.w),
@@ -262,6 +265,62 @@ class _TreasuryViewState extends ConsumerState<TreasuryView> {
               ],
             ),
             SizedBox(height: 16.h),
+
+            // الشكك (البيع الآجل) panel
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+              decoration: BoxDecoration(
+                color: AppColors.warningLight,
+                borderRadius: BorderRadius.circular(10.r),
+                border: Border.all(color: AppColors.warning),
+              ),
+              child: Row(
+                children: [
+                  Icon(LucideIcons.clock, color: AppColors.warning, size: 22),
+                  SizedBox(width: 10.w),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'الشكك (بيع آجل): ${totalDebts.toStringAsFixed(2)} ج.م${debtors.isNotEmpty ? ' على ${debtors.length} عميل' : ''}',
+                          style: TextStyle(
+                            fontFamily: 'Cairo',
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        if (debtors.isNotEmpty) ...[
+                          SizedBox(height: 2.h),
+                          Text(
+                            debtors.take(3).map((c) => '${c.name}: ${c.balance.toStringAsFixed(2)} ج.م').join('  |  ') +
+                                (debtors.length > 3 ? '  |  ...' : ''),
+                            style: TextStyle(
+                              fontFamily: 'Cairo',
+                              fontSize: 12.sp,
+                              color: AppColors.textSecondary,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  SizedBox(width: 12.w),
+                  ElevatedButton.icon(
+                    onPressed: debtors.isNotEmpty ? () => _showCollectDialog(context, db, debtors) : null,
+                    icon: Icon(LucideIcons.coins, size: 18),
+                    label: Text('تحصيل دفعة', style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.success,
+                      foregroundColor: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(height: 20.h),
 
             // Active Shift Status Line inside Treasury
             Container(
@@ -313,6 +372,12 @@ class _TreasuryViewState extends ConsumerState<TreasuryView> {
                   ),
                 ),
                 const Spacer(),
+                OutlinedButton.icon(
+                  onPressed: () => _showCategoryBreakdownDialog(context, filteredTxs, categoryNames),
+                  icon: Icon(LucideIcons.pieChart, size: 16),
+                  label: Text('توزيع المصروفات بالفئات', style: TextStyle(fontFamily: 'Cairo', fontSize: 12)),
+                ),
+                SizedBox(width: 8.w),
                 SegmentedButton<String>(
                   segments: const [
                     ButtonSegment(
@@ -402,10 +467,27 @@ class _TreasuryViewState extends ConsumerState<TreasuryView> {
                                     ),
                                   ),
                                 ),
+                                SizedBox(width: 6.w),
+                                Container(
+                                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
+                                  decoration: BoxDecoration(
+                                    color: _paymentBadgeColor(t.paymentMethod).withValues(alpha: 0.12),
+                                    borderRadius: BorderRadius.circular(6.r),
+                                  ),
+                                  child: Text(
+                                    _paymentMethodLabel(t.paymentMethod),
+                                    style: TextStyle(
+                                      color: _paymentBadgeColor(t.paymentMethod),
+                                      fontSize: 11.sp,
+                                      fontWeight: FontWeight.bold,
+                                      fontFamily: 'Cairo',
+                                    ),
+                                  ),
+                                ),
                               ],
                             ),
                             subtitle: Text(
-                              'التاريخ: ${intl.DateFormat('yyyy/MM/dd HH:mm').format(t.createdAt)} ${t.shiftId != null ? '| وردية #${t.shiftId}' : ''}',
+                              'التاريخ: ${intl.DateFormat('yyyy/MM/dd HH:mm').format(t.createdAt)} ${t.shiftId != null ? '| وردية #${t.shiftId}' : ''}${t.categoryId != null && categoryNames.containsKey(t.categoryId) ? ' | الفئة: ${categoryNames[t.categoryId]}' : ''}',
                               style: TextStyle(color: AppColors.textSecondary, fontFamily: 'Cairo', fontSize: 12.sp),
                             ),
                             trailing: Text(
@@ -600,9 +682,78 @@ class _TreasuryViewState extends ConsumerState<TreasuryView> {
     );
   }
 
+  void _showCategoryBreakdownDialog(
+    BuildContext context,
+    List<TreasuryTransaction> transactions,
+    Map<int, String> categoryNames,
+  ) {
+    final expenses = transactions.where((t) => t.type.toUpperCase() == 'EXPENSE').toList();
+    final Map<String, double> byCategory = {};
+    for (final t in expenses) {
+      final key = t.categoryId != null && categoryNames.containsKey(t.categoryId)
+          ? categoryNames[t.categoryId]!
+          : 'بدون فئة';
+      byCategory[key] = (byCategory[key] ?? 0) + t.amount;
+    }
+    final entries = byCategory.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
+    final total = expenses.fold<double>(0, (s, t) => s + t.amount);
+
+    showDialog(
+      context: context,
+      builder: (dialogCtx) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          title: Row(
+            children: [
+              Icon(LucideIcons.pieChart, color: AppColors.primary),
+              SizedBox(width: 8.w),
+              Text('توزيع المصروفات حسب الفئات', style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold)),
+            ],
+          ),
+          content: SizedBox(
+            width: 420.w,
+            child: entries.isEmpty
+                ? const Center(child: Text('لا توجد مصروفات في الفترة المحددة', style: TextStyle(fontFamily: 'Cairo')))
+                : Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ...entries.map(
+                        (e) => Padding(
+                          padding: EdgeInsets.symmetric(vertical: 4.h),
+                          child: Row(
+                            children: [
+                              Expanded(child: Text(e.key, style: const TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.w600))),
+                              Text('${e.value.toStringAsFixed(2)} ج.م (${total == 0 ? 0 : (e.value / total * 100).toStringAsFixed(1)}%)',
+                                  style: const TextStyle(fontFamily: 'Cairo', color: AppColors.error)),
+                            ],
+                          ),
+                        ),
+                      ),
+                      Divider(height: 20.h),
+                      Row(
+                        children: [
+                          const Expanded(child: Text('الإجمالي', style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold))),
+                          Text('${total.toStringAsFixed(2)} ج.م', style: const TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold)),
+                        ],
+                      ),
+                    ],
+                  ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogCtx),
+              child: Text('إغلاق', style: TextStyle(fontFamily: 'Cairo', color: AppColors.textSecondary)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _showAddTransactionDialog(BuildContext context, AppDatabase db, {required bool isIncome}) {
     final amountController = TextEditingController();
     final descController = TextEditingController();
+    String method = 'cash';
 
     showDialog(
       context: context,
@@ -645,6 +796,20 @@ class _TreasuryViewState extends ConsumerState<TreasuryView> {
                       border: OutlineInputBorder(),
                     ),
                   ),
+                  SizedBox(height: 16.h),
+                  DropdownButtonFormField<String>(
+                    initialValue: 'cash',
+                    decoration: const InputDecoration(
+                      labelText: 'طريقة الدفع',
+                      border: OutlineInputBorder(),
+                    ),
+                    items: const [
+                      DropdownMenuItem(value: 'cash', child: Text('نقدي — درج الكاش', style: TextStyle(fontFamily: 'Cairo'))),
+                      DropdownMenuItem(value: 'card', child: Text('فيزا / كارت', style: TextStyle(fontFamily: 'Cairo'))),
+                      DropdownMenuItem(value: 'fawry', child: Text('فوري', style: TextStyle(fontFamily: 'Cairo'))),
+                    ],
+                    onChanged: (v) => method = v ?? 'cash',
+                  ),
                 ],
               ),
             ),
@@ -664,8 +829,9 @@ class _TreasuryViewState extends ConsumerState<TreasuryView> {
                       db,
                       type: isIncome ? 'INCOME' : 'EXPENSE',
                       amount: amount,
-                      userId: 1,
+                      userId: ref.read(currentUserIdProvider) ?? 1,
                       description: desc.isNotEmpty ? desc : (isIncome ? 'إيداع نقدي' : 'صرف مصروفات'),
+                      paymentMethod: method,
                     );
                     if (dialogCtx.mounted) {
                       Navigator.pop(dialogCtx);
@@ -684,6 +850,296 @@ class _TreasuryViewState extends ConsumerState<TreasuryView> {
           ),
         );
       },
+    );
+  }
+
+  double _walletBalance(List<TreasuryTransaction> txs, String method) {
+    double balance = 0;
+    for (final t in txs) {
+      if (t.paymentMethod != method) continue;
+      final type = t.type.toUpperCase();
+      final isIn = type == 'INCOME' || type == 'SALE' || type == 'DEPOSIT' || type == 'IN';
+      balance += isIn ? t.amount : -t.amount;
+    }
+    return balance;
+  }
+
+  String _paymentMethodLabel(String? method) {
+    switch (method) {
+      case 'card':
+        return 'فيزا';
+      case 'fawry':
+        return 'فوري';
+      case 'credit':
+        return 'آجل';
+      default:
+        return 'نقدي';
+    }
+  }
+
+  Color _paymentBadgeColor(String? method) {
+    switch (method) {
+      case 'card':
+        return AppColors.info;
+      case 'fawry':
+        return AppColors.warning;
+      case 'credit':
+        return AppColors.error;
+      default:
+        return AppColors.success;
+    }
+  }
+
+  Widget _buildWalletCard({
+    required String title,
+    required double amount,
+    required IconData icon,
+    required Color color,
+    VoidCallback? onTransfer,
+  }) {
+    return Container(
+      padding: EdgeInsets.all(16.w),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(color: AppColors.textSecondary, fontSize: 12.sp, fontFamily: 'Cairo'),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              Icon(icon, color: color, size: 18),
+            ],
+          ),
+          SizedBox(height: 6.h),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              '${amount.toStringAsFixed(2)} ج.م',
+              style: TextStyle(color: color, fontSize: 20.sp, fontWeight: FontWeight.bold, fontFamily: 'Cairo'),
+            ),
+          ),
+          SizedBox(height: 8.h),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: onTransfer,
+              icon: Icon(LucideIcons.arrowLeftCircle, size: 14),
+              label: Text('توريد للدرج', style: TextStyle(fontFamily: 'Cairo', fontSize: 12.sp)),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: onTransfer != null ? color : AppColors.textTertiary,
+                side: BorderSide(color: color.withValues(alpha: 0.5)),
+                padding: EdgeInsets.symmetric(vertical: 6.h),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showTransferDialog(BuildContext context, AppDatabase db, String fromMethod, double walletBalance) {
+    final amountController = TextEditingController(text: walletBalance.toStringAsFixed(2));
+    final label = fromMethod == 'card' ? 'فيزا / كارت' : 'فوري';
+
+    showDialog(
+      context: context,
+      builder: (dialogCtx) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14.r)),
+          title: Row(
+            children: [
+              Icon(LucideIcons.arrowLeftCircle, color: AppColors.primary),
+              SizedBox(width: 8.w),
+              Text(
+                'توريد من محفظة $label إلى درج الكاش',
+                style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold, fontSize: 16.sp),
+              ),
+            ],
+          ),
+          content: SizedBox(
+            width: 420.w,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'الرصيد المتاح في المحفظة: ${walletBalance.toStringAsFixed(2)} ج.م',
+                  style: TextStyle(fontFamily: 'Cairo', color: AppColors.textSecondary, fontSize: 13.sp),
+                ),
+                SizedBox(height: 12.h),
+                TextField(
+                  controller: amountController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'المبلغ المراد توريده (ج.م)',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogCtx),
+              child: Text('إلغاء', style: TextStyle(fontFamily: 'Cairo', color: AppColors.textSecondary)),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+              onPressed: () async {
+                final amount = double.tryParse(amountController.text) ?? 0;
+                if (amount <= 0 || amount > walletBalance + 0.009) {
+                  AppErrorHandler.showErrorSnackBar(context, 'أدخل مبلغاً صحيحاً لا يتجاوز رصيد المحفظة');
+                  return;
+                }
+                try {
+                  await DbHelpers.transferWalletToDrawer(
+                    db,
+                    fromMethod: fromMethod,
+                    amount: amount,
+                    userId: ref.read(currentUserIdProvider) ?? 1,
+                    notes: 'توريد من محفظة $label إلى درج الكاش',
+                  );
+                  if (dialogCtx.mounted) Navigator.pop(dialogCtx);
+                  if (context.mounted) {
+                    AppErrorHandler.showSuccessSnackBar(context, 'تم توريد المبلغ إلى درج الكاش بنجاح');
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    AppErrorHandler.showErrorSnackBar(context, 'فشل التحويل: $e');
+                  }
+                }
+              },
+              child: Text('تأكيد التوريد', style: TextStyle(fontFamily: 'Cairo', color: Colors.white, fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showCollectDialog(BuildContext context, AppDatabase db, List<Customer> debtors) {
+    final amountController = TextEditingController();
+    Customer selected = debtors.first;
+    String method = 'cash';
+
+    showDialog(
+      context: context,
+      builder: (dialogCtx) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14.r)),
+          title: Row(
+            children: [
+              Icon(LucideIcons.coins, color: AppColors.success),
+              SizedBox(width: 8.w),
+              Text(
+                'تحصيل دفعة من عميل (شكك)',
+                style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold, fontSize: 16.sp),
+              ),
+            ],
+          ),
+          content: SizedBox(
+            width: 450.w,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  DropdownButtonFormField<Customer>(
+                    initialValue: selected,
+                    isExpanded: true,
+                    decoration: const InputDecoration(
+                      labelText: 'العميل المدين',
+                      border: OutlineInputBorder(),
+                    ),
+                    items: [
+                      for (final c in debtors)
+                        DropdownMenuItem(
+                          value: c,
+                          child: Text(
+                            '${c.name} — عليه ${c.balance.toStringAsFixed(2)} ج.م',
+                            style: TextStyle(fontFamily: 'Cairo'),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                    ],
+                    onChanged: (v) {
+                      if (v != null) selected = v;
+                    },
+                  ),
+                  SizedBox(height: 16.h),
+                  TextField(
+                    controller: amountController,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: 'المبلغ المحصل (ج.م)',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  SizedBox(height: 16.h),
+                  DropdownButtonFormField<String>(
+                    initialValue: 'cash',
+                    decoration: const InputDecoration(
+                      labelText: 'طريقة استلام الدفعة',
+                      border: OutlineInputBorder(),
+                    ),
+                    items: const [
+                      DropdownMenuItem(value: 'cash', child: Text('نقدي — درج الكاش', style: TextStyle(fontFamily: 'Cairo'))),
+                      DropdownMenuItem(value: 'card', child: Text('فيزا / كارت', style: TextStyle(fontFamily: 'Cairo'))),
+                      DropdownMenuItem(value: 'fawry', child: Text('فوري', style: TextStyle(fontFamily: 'Cairo'))),
+                    ],
+                    onChanged: (v) => method = v ?? 'cash',
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogCtx),
+              child: Text('إلغاء', style: TextStyle(fontFamily: 'Cairo', color: AppColors.textSecondary)),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: AppColors.success),
+              onPressed: () async {
+                final amount = double.tryParse(amountController.text) ?? 0;
+                if (amount <= 0) {
+                  AppErrorHandler.showErrorSnackBar(context, 'أدخل مبلغاً صحيحاً للتحصيل');
+                  return;
+                }
+                try {
+                  await DbHelpers.receiveCustomerPayment(
+                    db,
+                    customerId: selected.id,
+                    amount: amount,
+                    userId: ref.read(currentUserIdProvider) ?? 1,
+                    paymentMethod: method,
+                    notes: 'تحصيل من الشكك',
+                  );
+                  if (dialogCtx.mounted) Navigator.pop(dialogCtx);
+                  if (context.mounted) {
+                    AppErrorHandler.showSuccessSnackBar(context, 'تم تحصيل الدفعة وتقليل مديونية العميل بنجاح');
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    AppErrorHandler.showErrorSnackBar(context, 'فشل التحصيل: $e');
+                  }
+                }
+              },
+              child: Text('تأكيد التحصيل', style: TextStyle(fontFamily: 'Cairo', color: Colors.white, fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

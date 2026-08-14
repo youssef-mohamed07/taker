@@ -455,12 +455,18 @@ class _ReturnsViewState extends ConsumerState<ReturnsView> with SingleTickerProv
                     borderRadius: BorderRadius.circular(6.r),
                   ),
                   child: Text(
-                    r.paymentMethod == 'cash' ? 'نقدي (كاش)' : 'آجل (خصم دَين)',
+                    r.paymentMethod == 'cash'
+                        ? 'نقدي (كاش)'
+                        : r.paymentMethod == 'card'
+                            ? 'فيزا / كارت'
+                            : r.paymentMethod == 'fawry'
+                                ? 'فوري'
+                                : 'آجل (خصم دَين)',
                     style: TextStyle(
                       fontFamily: 'Cairo',
                       fontSize: 12.sp,
                       fontWeight: FontWeight.bold,
-                      color: r.paymentMethod == 'cash' ? AppColors.success : AppColors.warning,
+                      color: r.paymentMethod == 'credit' ? AppColors.warning : AppColors.success,
                     ),
                   ),
                 ),
@@ -529,12 +535,18 @@ class _ReturnsViewState extends ConsumerState<ReturnsView> with SingleTickerProv
                     borderRadius: BorderRadius.circular(6.r),
                   ),
                   child: Text(
-                    r.paymentMethod == 'cash' ? 'نقدي (كاش)' : 'آجل (خصم دَين)',
+                    r.paymentMethod == 'cash'
+                        ? 'نقدي (كاش)'
+                        : r.paymentMethod == 'card'
+                            ? 'فيزا / كارت'
+                            : r.paymentMethod == 'fawry'
+                                ? 'فوري'
+                                : 'آجل (خصم دَين)',
                     style: TextStyle(
                       fontFamily: 'Cairo',
                       fontSize: 12.sp,
                       fontWeight: FontWeight.bold,
-                      color: r.paymentMethod == 'cash' ? AppColors.success : AppColors.warning,
+                      color: r.paymentMethod == 'credit' ? AppColors.warning : AppColors.success,
                     ),
                   ),
                 ),

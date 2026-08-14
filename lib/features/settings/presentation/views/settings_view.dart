@@ -3,14 +3,16 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:printing/printing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:path/path.dart' as p;
+import '../../../../core/printing/receipt_printer.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/di/providers.dart';
 import '../../../../core/database/db_helpers.dart';
-import 'users_management_view.dart';
 
 class SettingsView extends ConsumerStatefulWidget {
   const SettingsView({super.key});
@@ -20,6 +22,26 @@ class SettingsView extends ConsumerStatefulWidget {
 }
 
 class _SettingsViewState extends ConsumerState<SettingsView> {
+  String _storeName = 'أبو وائل لتجارة الجملة والقطاعي';
+  String _phone1 = '';
+  String _phone2 = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadInvoiceSettings();
+  }
+
+  Future<void> _loadInvoiceSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    setState(() {
+      _storeName = prefs.getString('store_name') ?? _storeName;
+      _phone1 = prefs.getString('store_phone1') ?? '';
+      _phone2 = prefs.getString('store_phone2') ?? '';
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = ref.watch(themeModeProvider);
@@ -56,12 +78,27 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
               'المستخدمون',
               LucideIcons.userCog,
               subtitle: 'إدارة الحسابات والصلاحيات',
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const UsersManagementView()),
-                );
-              },
+              onTap: () => context.go('/users'),
+            ),
+            SizedBox(height: 12.h),
+            _buildSettingCard(
+              'بيانات الفاتورة',
+              LucideIcons.receipt,
+              subtitle: [
+                _storeName,
+                [
+                  if (_phone1.isNotEmpty) _phone1,
+                  if (_phone2.isNotEmpty) _phone2,
+                ].join(' - '),
+              ].where((s) => s.isNotEmpty).join(' | '),
+              onTap: () => _showInvoiceSettingsDialog(context),
+            ),
+            SizedBox(height: 12.h),
+            _buildSettingCard(
+              'معاينة الفاتورة',
+              LucideIcons.eye,
+              subtitle: 'شكل الفاتورة المطبوعة وتغيير حجم الورق',
+              onTap: () => _showInvoicePreviewDialog(context),
             ),
             SizedBox(height: 12.h),
             _buildSettingCard(
@@ -127,7 +164,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
               ),
               onPressed: () async {
                 Navigator.pop(ctx);
-                await DbHelpers.clearAllData(db);
+                await DbHelpers.clearAllData(db, actorId: ref.read(currentUserIdProvider) ?? 1);
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
@@ -141,6 +178,195 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  void _showInvoiceSettingsDialog(BuildContext context) async {
+    final prefs = await SharedPreferences.getInstance();
+    String storeName =
+        prefs.getString('store_name') ?? 'أبو وائل لتجارة الجملة والقطاعي';
+    String phone1 = prefs.getString('store_phone1') ?? '';
+    String phone2 = prefs.getString('store_phone2') ?? '';
+
+    final nameController = TextEditingController(text: storeName);
+    final phone1Controller = TextEditingController(text: phone1);
+    final phone2Controller = TextEditingController(text: phone2);
+
+    if (!context.mounted) return;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          title: Row(
+            children: [
+              Icon(LucideIcons.receipt, color: AppColors.primary),
+              SizedBox(width: 8.w),
+              Text(
+                'بيانات الفاتورة',
+                style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+          content: SizedBox(
+            width: 400.w,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: nameController,
+                  decoration: const InputDecoration(
+                    labelText: 'اسم الفاتورة (اسم المحل)',
+                    border: OutlineInputBorder(),
+                  ),
+                  onChanged: (v) => storeName = v,
+                ),
+                SizedBox(height: 16.h),
+                TextFormField(
+                  controller: phone1Controller,
+                  keyboardType: TextInputType.phone,
+                  decoration: const InputDecoration(
+                    labelText: 'رقم التليفون الأول',
+                    border: OutlineInputBorder(),
+                  ),
+                  onChanged: (v) => phone1 = v,
+                ),
+                SizedBox(height: 16.h),
+                TextFormField(
+                  controller: phone2Controller,
+                  keyboardType: TextInputType.phone,
+                  decoration: const InputDecoration(
+                    labelText: 'رقم التليفون الثاني',
+                    border: OutlineInputBorder(),
+                  ),
+                  onChanged: (v) => phone2 = v,
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text('إلغاء', style: TextStyle(fontFamily: 'Cairo')),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+              onPressed: () async {
+                await prefs.setString('store_name', storeName.trim());
+                await prefs.setString('store_phone1', phone1.trim());
+                await prefs.setString('store_phone2', phone2.trim());
+                setState(() {
+                  _storeName = storeName.trim();
+                  _phone1 = phone1.trim();
+                  _phone2 = phone2.trim();
+                });
+                if (context.mounted) {
+                  Navigator.pop(ctx);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('تم حفظ بيانات الفاتورة بنجاح', style: TextStyle(fontFamily: 'Cairo')),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                }
+              },
+              child: Text('حفظ', style: TextStyle(fontFamily: 'Cairo', color: Colors.white)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showInvoicePreviewDialog(BuildContext context) async {
+    final prefs = await SharedPreferences.getInstance();
+    String paperSize = prefs.getString('paper_size') ?? '80mm';
+
+    if (!context.mounted) return;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          return Directionality(
+            textDirection: TextDirection.rtl,
+            child: Dialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
+              child: SizedBox(
+                width: 560.w,
+                height: 640.h,
+                child: Column(
+                  children: [
+                    // Header
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 14.h),
+                      child: Row(
+                        children: [
+                          Icon(LucideIcons.eye, color: AppColors.primary, size: 22),
+                          SizedBox(width: 10.w),
+                          Expanded(
+                            child: Text(
+                              'معاينة الفاتورة',
+                              style: TextStyle(
+                                fontFamily: 'Cairo',
+                                fontWeight: FontWeight.bold,
+                                fontSize: 18.sp,
+                              ),
+                            ),
+                          ),
+                          // Paper size control
+                          SizedBox(
+                            width: 150.w,
+                            child: DropdownButtonFormField<String>(
+                              value: paperSize,
+                              isExpanded: true,
+                              decoration: const InputDecoration(
+                                labelText: 'حجم الورق',
+                                border: OutlineInputBorder(),
+                                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                              ),
+                              items: ['80mm', '58mm']
+                                  .map((size) => DropdownMenuItem(
+                                        value: size,
+                                        child: Text(size, style: TextStyle(fontFamily: 'Cairo')),
+                                      ))
+                                  .toList(),
+                              onChanged: (v) async {
+                                if (v == null) return;
+                                setDialogState(() => paperSize = v);
+                                await prefs.setString('paper_size', v);
+                              },
+                            ),
+                          ),
+                          SizedBox(width: 10.w),
+                          IconButton(
+                            onPressed: () => Navigator.pop(ctx),
+                            icon: const Icon(LucideIcons.x, size: 20),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Divider(height: 1),
+                    // Live preview of the receipt
+                    Expanded(
+                      child: PdfPreview(
+                        build: (_) => ReceiptPrinter.previewInvoice(paperSize: paperSize),
+                        pdfFileName: 'معاينة-الفاتورة.pdf',
+                        allowPrinting: true,
+                        allowSharing: false,
+                        canChangePageFormat: false,
+                        canChangeOrientation: false,
+                        canDebug: false,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -267,11 +493,15 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
     );
   }
 
+  Future<File> _runtimeDbFile() async {
+    final dir = await getApplicationDocumentsDirectory();
+    return File(p.join(dir.path, 'Tager', 'tager_db.sqlite'));
+  }
+
   Future<void> _performBackup(BuildContext context) async {
     try {
-      final dbFolder = await getApplicationDocumentsDirectory();
-      final dbFile = File(p.join(dbFolder.path, 'app_db.sqlite'));
-      
+      final dbFile = await _runtimeDbFile();
+
       if (!await dbFile.exists()) {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('قاعدة البيانات غير موجودة!', style: TextStyle(fontFamily: 'Cairo'))));
@@ -307,15 +537,19 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
       if (result == null || result.files.single.path == null) return;
 
       final backupFile = File(result.files.single.path!);
-      final dbFolder = await getApplicationDocumentsDirectory();
-      final dbFile = File(p.join(dbFolder.path, 'app_db.sqlite'));
+      final dbFile = await _runtimeDbFile();
 
+      // Close the live connection so the file can be replaced safely.
+      final db = ref.read(databaseProvider);
+      await db.close();
       await backupFile.copy(dbFile.path);
 
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('تمت الاستعادة بنجاح! يرجى إعادة تشغيل التطبيق ليتم تحديث البيانات.', style: TextStyle(fontFamily: 'Cairo')), backgroundColor: Colors.green),
+          const SnackBar(content: Text('تمت الاستعادة بنجاح! سيتم إغلاق التطبيق لإعادة تشغيله بقاعدة البيانات المستعادة.', style: TextStyle(fontFamily: 'Cairo')), backgroundColor: Colors.green),
         );
+        await Future.delayed(const Duration(milliseconds: 1200));
+        exit(0);
       }
     } catch (e) {
       if (context.mounted) {

@@ -423,7 +423,7 @@ class _InventoryViewState extends ConsumerState<InventoryView> {
                                   productId: product.id,
                                   movementType: 'DAMAGED',
                                   quantity: qty,
-                                  userId: 1, // Currently hardcoded user 1
+                                  userId: ref.read(currentUserIdProvider) ?? 1,
                                   notes: drift.Value('هالك/تالف: ${reasonController.text}'),
                                 )
                               );

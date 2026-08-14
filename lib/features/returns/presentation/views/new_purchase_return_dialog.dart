@@ -102,7 +102,7 @@ class _NewPurchaseReturnDialogState extends ConsumerState<NewPurchaseReturnDialo
         totalAmount: _totalAmount,
         paymentMethod: _paymentMethod,
         items: itemsToReturn.cast<PurchaseReturnItemsCompanion>(),
-        userId: 1, // Admin
+        userId: ref.read(currentUserIdProvider) ?? 1,
         notes: _notesController.text.trim(),
       );
 

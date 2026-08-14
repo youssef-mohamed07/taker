@@ -108,7 +108,7 @@ class _SuppliersViewState extends ConsumerState<SuppliersView> {
                               db,
                               supplierId: supplier.id,
                               amount: amount,
-                              userId: 1, // Currently hardcoded user 1
+                              userId: ref.read(currentUserIdProvider) ?? 1,
                               notes: notesController.text.isNotEmpty ? notesController.text : null,
                             );
                             if (mounted) {

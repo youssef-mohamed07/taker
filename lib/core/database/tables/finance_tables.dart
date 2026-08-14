@@ -21,6 +21,8 @@ class TreasuryTransactions extends Table {
   IntColumn get referenceId => integer().nullable()();
   IntColumn get categoryId => integer().nullable()();
   IntColumn get userId => integer().references(Users, #id)();
+  /// 'cash' | 'card' | 'fawry' — channel the money moved through
+  TextColumn get paymentMethod => text().nullable()();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 }
 
@@ -70,5 +72,27 @@ class PartnerProfits extends Table {
   IntColumn get partnerId => integer().references(Partners, #id)();
   TextColumn get period => text()(); // e.g., "2026-01"
   RealColumn get amount => real()();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+}
+
+/// Shop workers (daily wage earners)
+class Workers extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get name => text().withLength(min: 1, max: 200)();
+  TextColumn get phone => text().withLength(max: 20).nullable()();
+  RealColumn get dailyWage => real().withDefault(const Constant(0))();
+  TextColumn get notes => text().nullable()();
+  BoolColumn get isActive => boolean().withDefault(const Constant(true))();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+}
+
+/// Salary payments made to workers
+class SalaryPayments extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get workerId => integer().references(Workers, #id)();
+  RealColumn get amount => real()();
+  TextColumn get paymentMethod => text().withDefault(const Constant('cash'))();
+  TextColumn get notes => text().nullable()();
+  IntColumn get userId => integer().references(Users, #id)();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 }

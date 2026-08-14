@@ -102,7 +102,7 @@ class _NewSalesReturnDialogState extends ConsumerState<NewSalesReturnDialog> {
         totalAmount: _totalAmount,
         paymentMethod: _paymentMethod,
         items: itemsToReturn.cast<SalesReturnItemsCompanion>(),
-        userId: 1, // Admin
+        userId: ref.read(currentUserIdProvider) ?? 1,
         notes: _notesController.text.trim(),
       );
 

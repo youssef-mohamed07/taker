@@ -66,4 +66,6 @@ flutter:
     - assets/images/
     - assets/audio/
     - assets/sounds/
+    - assets/fonts/
+    - assets/tager_db.sqlite
 

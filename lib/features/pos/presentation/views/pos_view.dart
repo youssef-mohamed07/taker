@@ -11,6 +11,7 @@ import '../../../../core/di/providers.dart';
 import '../../../../core/database/app_database.dart';
 import '../../../../core/database/db_helpers.dart';
 import '../../../../core/errors/app_error_handler.dart';
+import '../../../../core/printing/receipt_printer.dart';
 import '../../../../core/utils/barcode_scanner_handler.dart';
 
 /// Point of Sale - Full screen view
@@ -107,11 +108,21 @@ class _PosViewState extends ConsumerState<PosView> {
         );
       }
     });
+    final inCart = _cartItems
+        .firstWhere((item) => item.product.id == product.id)
+        .quantity;
     if (mounted) {
-      AppErrorHandler.showSuccessSnackBar(
-        context,
-        'تمت إضافة "${product.nameAr}" إلى الفاتورة',
-      );
+      if (inCart > product.currentQuantity) {
+        AppErrorHandler.showWarningSnackBar(
+          context,
+          'تنبيه: الكمية المطلوبة من "${product.nameAr}" أكبر من المخزون المتاح (${product.currentQuantity.toStringAsFixed(2)})',
+        );
+      } else {
+        AppErrorHandler.showSuccessSnackBar(
+          context,
+          'تمت إضافة "${product.nameAr}" إلى الفاتورة',
+        );
+      }
     }
   }
 
@@ -1090,11 +1101,96 @@ class _PosViewState extends ConsumerState<PosView> {
       return;
     }
 
-    if (_paymentMethod == 'cash') {
+    // An open shift is mandatory before selling
+    final db = ref.read(databaseProvider);
+    final activeShift = await DbHelpers.getActiveShift(db);
+    if (activeShift == null) {
+      if (!mounted) return;
+      await _showOpenShiftDialog();
+      final reopened = await DbHelpers.getActiveShift(db);
+      if (reopened == null) return;
+    }
+
+    if (_paymentMethod != 'credit') {
       _showCheckoutDialog();
     } else {
       await _processInvoice(0.0);
     }
+  }
+
+  Future<void> _showOpenShiftDialog() async {
+    final balanceCtrl = TextEditingController(text: '0');
+    await showDialog<void>(
+      context: context,
+      builder: (dialogCtx) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
+          title: Row(
+            children: [
+              Icon(LucideIcons.clock, color: AppColors.warning),
+              SizedBox(width: 8.w),
+              Text('لا يوجد شيفت مفتوح', style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold)),
+            ],
+          ),
+          content: SizedBox(
+            width: 400.w,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'يجب فتح شيفت جديد قبل إتمام البيع. أدخل الرصيد الافتتاحي للخزينة:',
+                  style: TextStyle(fontFamily: 'Cairo', fontSize: 13.sp),
+                ),
+                SizedBox(height: 16.h),
+                TextField(
+                  controller: balanceCtrl,
+                  keyboardType: TextInputType.number,
+                  autofocus: true,
+                  decoration: const InputDecoration(
+                    labelText: 'الرصيد الافتتاحي (ج.م)',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogCtx),
+              child: Text('إلغاء', style: TextStyle(fontFamily: 'Cairo')),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () async {
+                final balance = double.tryParse(balanceCtrl.text.trim()) ?? 0.0;
+                if (balance < 0) {
+                  AppErrorHandler.showWarningSnackBar(dialogCtx, 'الرصيد الافتتاحي لا يمكن أن يكون سالباً');
+                  return;
+                }
+                try {
+                  final db = ref.read(databaseProvider);
+                  final userId = ref.read(currentUserIdProvider) ?? 1;
+                  await DbHelpers.openShift(db, openingBalance: balance, userId: userId);
+                  if (dialogCtx.mounted) Navigator.pop(dialogCtx);
+                  if (mounted) {
+                    AppErrorHandler.showSuccessSnackBar(context, 'تم فتح الشيفت بنجاح');
+                  }
+                } catch (e) {
+                  if (dialogCtx.mounted) {
+                    AppErrorHandler.showErrorDialog(dialogCtx, e, title: 'خطأ في فتح الشيفت');
+                  }
+                }
+              },
+              child: Text('فتح الشيفت', style: TextStyle(fontFamily: 'Cairo')),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   void _showCheckoutDialog() {
@@ -1113,10 +1209,21 @@ class _PosViewState extends ConsumerState<PosView> {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
               title: Row(
                 children: [
-                  Icon(LucideIcons.banknote, color: AppColors.primary),
+                  Icon(
+                    _paymentMethod == 'card'
+                        ? LucideIcons.creditCard
+                        : _paymentMethod == 'fawry'
+                            ? LucideIcons.smartphone
+                            : LucideIcons.banknote,
+                    color: AppColors.primary,
+                  ),
                   SizedBox(width: 8.w),
                   Text(
-                    'الدفع النقدي',
+                    _paymentMethod == 'card'
+                        ? 'الدفع بالفيزا / كارت'
+                        : _paymentMethod == 'fawry'
+                            ? 'الدفع عن طريق فوري'
+                            : 'الدفع النقدي',
                     style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold),
                   ),
                 ],
@@ -1199,7 +1306,7 @@ class _PosViewState extends ConsumerState<PosView> {
                   child: Text('إلغاء (Esc)', style: TextStyle(fontFamily: 'Cairo')),
                 ),
                 ElevatedButton.icon(
-                  onPressed: change >= 0 ? () {
+                  onPressed: change >= 0 && paidAmount >= 0 ? () {
                     Navigator.pop(context);
                     _processInvoice(paidAmount);
                   } : null,
@@ -1223,7 +1330,26 @@ class _PosViewState extends ConsumerState<PosView> {
     final db = ref.read(databaseProvider);
     final userId = ref.read(currentUserIdProvider) ?? 1;
 
-    final actualPaid = _paymentMethod == 'cash' ? _total : 0.0;
+    // Stock availability check against fresh DB quantities
+    final insufficient = <String>[];
+    for (final item in _cartItems) {
+      final fresh = await (db.select(db.products)
+            ..where((t) => t.id.equals(item.product.id)))
+          .getSingleOrNull();
+      if (fresh == null || fresh.currentQuantity < item.quantity) {
+        final available = fresh?.currentQuantity ?? 0;
+        insufficient.add('${item.product.nameAr} (المتاح: ${available.toStringAsFixed(2)})');
+      }
+    }
+    if (insufficient.isNotEmpty && mounted) {
+      AppErrorHandler.showErrorSnackBar(
+        context,
+        'الكمية غير كافية: ${insufficient.join('، ')}',
+      );
+      return;
+    }
+
+    final actualPaid = _paymentMethod != 'credit' ? _total : 0.0;
 
     try {
       final invoiceId = await DbHelpers.saveSalesInvoice(
@@ -1247,6 +1373,34 @@ class _PosViewState extends ConsumerState<PosView> {
     } catch (e) {
       if (mounted) {
         AppErrorHandler.showErrorDialog(context, e, title: 'خطأ في حفظ الفاتورة');
+      }
+    }
+  }
+
+  Future<void> _printInvoice(Invoice inv, List<PosCartItem> items, Customer? cust) async {
+    try {
+      await ReceiptPrinter.printInvoice(
+        invoice: inv,
+        lines: [
+          for (final it in items)
+            ReceiptLine(
+              productName: it.product.nameAr,
+              quantity: it.quantity,
+              unitPrice: it.unitPrice,
+              total: it.total,
+            ),
+        ],
+        customerName: cust?.name,
+        cashierName: ref.read(currentUserProvider)?.fullName,
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('تعذر الطباعة: $e', style: const TextStyle(fontFamily: 'Cairo')),
+            backgroundColor: AppColors.error,
+          ),
+        );
       }
     }
   }
@@ -1297,7 +1451,7 @@ class _PosViewState extends ConsumerState<PosView> {
                       style: TextStyle(fontFamily: 'Cairo', fontSize: 13.sp),
                     ),
                     Text(
-                      'طريقة الدفع: ${inv.paymentMethod == "cash" ? "نقدي" : "آجل"}',
+                      'طريقة الدفع: ${inv.paymentMethod == "cash" ? "نقدي" : inv.paymentMethod == "card" ? "فيزا" : inv.paymentMethod == "fawry" ? "فوري" : "آجل"}',
                       style: TextStyle(fontFamily: 'Cairo', fontSize: 13.sp),
                     ),
                   ],
@@ -1363,13 +1517,7 @@ class _PosViewState extends ConsumerState<PosView> {
           ),
           actions: [
             OutlinedButton.icon(
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('جاري إرسال الفاتورة للطابعة...', style: TextStyle(fontFamily: 'Cairo')),
-                  ),
-                );
-              },
+              onPressed: () => _printInvoice(inv, items, cust),
               icon: Icon(LucideIcons.printer, size: 16),
               label: Text('طباعة الإيصال (F3)', style: TextStyle(fontFamily: 'Cairo')),
             ),
@@ -1815,7 +1963,7 @@ class _PosViewState extends ConsumerState<PosView> {
                           ),
                         ),
 
-                        // Payment method toggle
+                        // Payment method selector
                         Padding(
                           padding: EdgeInsets.symmetric(horizontal: 20.w),
                           child: Row(
@@ -1835,8 +1983,34 @@ class _PosViewState extends ConsumerState<PosView> {
                               SizedBox(width: 8.w),
                               Expanded(
                                 child: _buildPaymentButton(
-                                  'آجل',
+                                  'فيزا',
                                   LucideIcons.creditCard,
+                                  _paymentMethod == 'card',
+                                  onTap: () {
+                                    setState(() {
+                                      _paymentMethod = 'card';
+                                    });
+                                  },
+                                ),
+                              ),
+                              SizedBox(width: 8.w),
+                              Expanded(
+                                child: _buildPaymentButton(
+                                  'فوري',
+                                  LucideIcons.smartphone,
+                                  _paymentMethod == 'fawry',
+                                  onTap: () {
+                                    setState(() {
+                                      _paymentMethod = 'fawry';
+                                    });
+                                  },
+                                ),
+                              ),
+                              SizedBox(width: 8.w),
+                              Expanded(
+                                child: _buildPaymentButton(
+                                  'آجل',
+                                  LucideIcons.clock,
                                   _paymentMethod == 'credit',
                                   onTap: () {
                                     if (_selectedCustomer == null) {
@@ -2000,13 +2174,16 @@ class _PosViewState extends ConsumerState<PosView> {
                   ),
                 ),
                 Expanded(
-                  child: Text(
-                    item.quantity.toStringAsFixed(item.quantity.truncateToDouble() == item.quantity ? 0 : 2),
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontFamily: 'Cairo',
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14.sp,
+                  child: InkWell(
+                    onTap: () => _showEditQuantityDialog(index, item),
+                    child: Text(
+                      item.quantity.toStringAsFixed(item.quantity.truncateToDouble() == item.quantity ? 0 : 2),
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontFamily: 'Cairo',
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14.sp,
+                      ),
                     ),
                   ),
                 ),
@@ -2118,6 +2295,50 @@ class _PosViewState extends ConsumerState<PosView> {
               onPressed: () {
                 final p = double.tryParse(priceCtrl.text) ?? item.unitPrice;
                 _updateItemUnitPrice(index, p);
+                Navigator.pop(context);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+              ),
+              child: Text('حفظ', style: TextStyle(fontFamily: 'Cairo')),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showEditQuantityDialog(int index, PosCartItem item) {
+    final qtyCtrl = TextEditingController(text: item.quantity.toString());
+
+    showDialog(
+      context: context,
+      builder: (context) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
+          title: Text(
+            'تعديل كمية ${item.product.nameAr}',
+            style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold),
+          ),
+          content: TextFormField(
+            controller: qtyCtrl,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            decoration: InputDecoration(
+              labelText: 'الكمية (تدعم الكسور: 0.5 ، 0.25)',
+              border: OutlineInputBorder(),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('إلغاء', style: TextStyle(fontFamily: 'Cairo')),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final q = double.tryParse(qtyCtrl.text) ?? item.quantity;
+                _updateItemQuantity(index, q);
                 Navigator.pop(context);
               },
               style: ElevatedButton.styleFrom(

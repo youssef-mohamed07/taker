@@ -1,6 +1,9 @@
+import 'dart:convert';
 import 'dart:io';
+import 'package:crypto/crypto.dart';
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 import 'tables/all_tables.dart';
@@ -41,13 +44,21 @@ part 'app_database.g.dart';
     PurchaseReturns,
     PurchaseReturnItems,
     ProductBatches,
+    Workers,
+    SalaryPayments,
   ],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
+  /// Constructor for tests: pass an in-memory executor.
+  AppDatabase.withExecutor(super.executor);
+
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 7;
+
+  static String _sha256Hex(String value) =>
+      sha256.convert(utf8.encode(value)).toString();
 
   @override
   MigrationStrategy get migration {
@@ -91,6 +102,33 @@ class AppDatabase extends _$AppDatabase {
           } catch (_) {}
 
         }
+        if (from < 6) {
+          // Hash legacy plaintext passwords (e.g. the seeded admin123 row).
+          final hex64 = RegExp(r'^[0-9a-f]{64}$');
+          final allUsers = await select(users).get();
+          for (final u in allUsers) {
+            if (!hex64.hasMatch(u.passwordHash)) {
+              await (update(users)..where((t) => t.id.equals(u.id))).write(
+                UsersCompanion(passwordHash: Value(_sha256Hex(u.passwordHash))),
+              );
+            }
+          }
+        }
+        if (from < 7) {
+          try {
+            await m.createTable(workers);
+          } catch (_) {}
+          try {
+            await m.createTable(salaryPayments);
+          } catch (_) {}
+          try {
+            await m.addColumn(treasuryTransactions, treasuryTransactions.paymentMethod);
+          } catch (_) {}
+          // Legacy rows predate payment channels: treat as cash.
+          await customStatement(
+            "UPDATE treasury_transactions SET payment_method = 'cash' WHERE payment_method IS NULL;",
+          );
+        }
       },
       beforeOpen: (details) async {
         await customStatement('PRAGMA foreign_keys = ON');
@@ -108,11 +146,11 @@ class AppDatabase extends _$AppDatabase {
   }
 
   Future<void> _insertDefaults() async {
-    // Default admin user (password: admin123)
+    // Default admin user (password: admin123, stored as sha256 hex)
     await into(users).insert(
       UsersCompanion.insert(
         username: 'admin',
-        passwordHash: 'admin123', // TODO: Hash in production
+        passwordHash: _sha256Hex('admin123'),
         fullName: 'مدير النظام',
         role: 'admin',
       ),
@@ -163,6 +201,14 @@ LazyDatabase _openConnection() {
       await dbFolder.create(recursive: true);
     }
     final file = File(p.join(dbFolder.path, 'tager_db.sqlite'));
+    // Seed the runtime database from the bundled asset on first launch
+    if (!await file.exists()) {
+      final data = await rootBundle.load('assets/tager_db.sqlite');
+      await file.writeAsBytes(
+        data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes),
+        flush: true,
+      );
+    }
     return NativeDatabase.createInBackground(file);
   });
 }

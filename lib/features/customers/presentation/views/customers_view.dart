@@ -53,6 +53,7 @@ class _CustomersViewState extends ConsumerState<CustomersView> {
     final amountController = TextEditingController(text: customer.balance.toStringAsFixed(2));
     final notesController = TextEditingController();
     bool isLoading = false;
+    String method = 'cash';
 
     showDialog(
       context: context,
@@ -94,6 +95,20 @@ class _CustomersViewState extends ConsumerState<CustomersView> {
                         border: OutlineInputBorder(),
                       ),
                     ),
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<String>(
+                      initialValue: method,
+                      decoration: const InputDecoration(
+                        labelText: 'طريقة استلام الدفعة',
+                        border: OutlineInputBorder(),
+                      ),
+                      items: const [
+                        DropdownMenuItem(value: 'cash', child: Text('نقدي — درج الكاش', style: TextStyle(fontFamily: 'Cairo'))),
+                        DropdownMenuItem(value: 'card', child: Text('فيزا / كارت', style: TextStyle(fontFamily: 'Cairo'))),
+                        DropdownMenuItem(value: 'fawry', child: Text('فوري', style: TextStyle(fontFamily: 'Cairo'))),
+                      ],
+                      onChanged: (v) => setDialogState(() => method = v ?? 'cash'),
+                    ),
                   ],
                 ),
               ),
@@ -115,7 +130,8 @@ class _CustomersViewState extends ConsumerState<CustomersView> {
                               db,
                               customerId: customer.id,
                               amount: amount,
-                              userId: 1, // Currently hardcoded user 1
+                              userId: ref.read(currentUserIdProvider) ?? 1,
+                              paymentMethod: method,
                               notes: notesController.text.isNotEmpty ? notesController.text : null,
                             );
                             if (mounted) {
@@ -233,6 +249,9 @@ class _CustomersViewState extends ConsumerState<CustomersView> {
   @override
   Widget build(BuildContext context) {
     final customersAsync = ref.watch(customersStreamProvider);
+    final allCustomers = customersAsync.value ?? [];
+    final debtors = allCustomers.where((c) => c.balance > 0).toList();
+    final totalDebts = debtors.fold<double>(0, (s, c) => s + c.balance);
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -304,6 +323,29 @@ class _CustomersViewState extends ConsumerState<CustomersView> {
               ),
             ),
             const SizedBox(height: 20),
+            // Credit (الشكك) summary
+            if (totalDebts > 0)
+              Container(
+                margin: const EdgeInsets.only(bottom: 20),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: AppColors.warningLight,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: AppColors.warning),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(LucideIcons.clock, color: AppColors.warning, size: 20),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'إجمالي الشكك (البيع الآجل): ${totalDebts.toStringAsFixed(2)} ج.م على ${debtors.length} عميل — يمكنك التحصيل من زر المحفظة بجانب كل عميل',
+                        style: const TextStyle(fontFamily: 'Cairo', fontSize: 13, fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             Expanded(
               child: Container(
                 decoration: BoxDecoration(
