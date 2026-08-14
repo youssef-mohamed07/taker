@@ -1,15 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import 'package:drift/drift.dart' as drift;
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/database/app_database.dart';
-import '../../../../core/database/db_helpers.dart';
 import '../../../../core/di/providers.dart';
-import '../../../returns/presentation/views/new_purchase_return_dialog.dart';
 
 class PurchaseHistoryView extends ConsumerStatefulWidget {
   const PurchaseHistoryView({super.key});
@@ -155,7 +152,7 @@ class _PurchaseHistoryViewState extends ConsumerState<PurchaseHistoryView> {
                                 DataColumn(label: Text('الإجراءات')),
                               ],
                               rows: filtered.map((inv) {
-                                final custName = inv.supplierId != null ? (supplierMap[inv.supplierId] ?? 'مورد محذوف') : 'مورد نقدي (طياري)';
+                                final custName = supplierMap[inv.supplierId] ?? 'مورد محذوف';
                                 
                                 return DataRow(
                                   cells: [

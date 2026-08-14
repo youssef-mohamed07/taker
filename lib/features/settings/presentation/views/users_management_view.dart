@@ -205,7 +205,7 @@ class _UsersManagementViewState extends ConsumerState<UsersManagementView> {
                     final db = ref.read(databaseProvider);
                     if (isEditing) {
                       await db.update(db.users).replace(
-                        user!.copyWith(
+                        user.copyWith(
                           fullName: fullNameCtrl.text,
                           username: usernameCtrl.text,
                           passwordHash: passwordCtrl.text.isNotEmpty ? passwordCtrl.text : user.passwordHash,

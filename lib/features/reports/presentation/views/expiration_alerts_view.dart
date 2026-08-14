@@ -5,7 +5,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import 'package:drift/drift.dart' as drift;
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/database/app_database.dart';
 import '../../../../core/di/providers.dart';
 
 class ExpirationAlertsView extends ConsumerStatefulWidget {

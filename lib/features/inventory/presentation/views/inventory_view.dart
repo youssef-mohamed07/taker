@@ -345,6 +345,7 @@ class _InventoryViewState extends ConsumerState<InventoryView> {
   }
 
 
+  // ignore: unused_element
   void _showRecordDamageDialog(Product product) {
     final formKey = GlobalKey<FormState>();
     final qtyController = TextEditingController();

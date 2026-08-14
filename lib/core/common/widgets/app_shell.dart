@@ -302,7 +302,7 @@ class AppShell extends ConsumerWidget {
                 'ت',
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: 18.sp,
+                  fontSize: 22.sp,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -314,7 +314,7 @@ class AppShell extends ConsumerWidget {
               'تاجر',
               style: TextStyle(
                 color: Colors.white,
-                fontSize: 20.sp,
+                fontSize: 24.sp,
                 fontWeight: FontWeight.w700,
                 fontFamily: 'Cairo',
               ),
@@ -338,10 +338,12 @@ class AppShell extends ConsumerWidget {
         alignment: AlignmentDirectional.centerStart,
         child: Text(
           title,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: TextStyle(
             color: AppColors.sidebarIcon,
-            fontSize: 11.sp,
-            fontWeight: FontWeight.w600,
+            fontSize: 15.sp,
+            fontWeight: FontWeight.bold,
             fontFamily: 'Cairo',
             letterSpacing: 0.5,
           ),
@@ -392,22 +394,26 @@ class AppShell extends ConsumerWidget {
               children: [
                 Icon(
                   icon,
-                  size: 20,
+                  size: 24,
                   color: isActive
                       ? AppColors.sidebarIconActive
                       : AppColors.sidebarIcon,
                 ),
                 if (!isCollapsed) ...[
                   SizedBox(width: 12.w),
-                  Text(
-                    label,
-                    style: TextStyle(
-                      color: isActive
-                          ? AppColors.sidebarTextActive
-                          : AppColors.sidebarText,
-                      fontSize: 14.sp,
-                      fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
-                      fontFamily: 'Cairo',
+                  Expanded(
+                    child: Text(
+                      label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: isActive
+                            ? AppColors.sidebarTextActive
+                            : AppColors.sidebarText,
+                        fontSize: 16.sp,
+                        fontWeight: isActive ? FontWeight.bold : FontWeight.w600,
+                        fontFamily: 'Cairo',
+                      ),
                     ),
                   ),
                 ],
@@ -434,7 +440,7 @@ class AppShell extends ConsumerWidget {
         icon: Icon(
           isCollapsed ? LucideIcons.chevronsLeft : LucideIcons.chevronsRight,
           color: AppColors.sidebarIcon,
-          size: 20,
+          size: 24,
         ),
         tooltip: isCollapsed ? 'توسيع القائمة' : 'تصغير القائمة',
       ),

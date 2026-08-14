@@ -79,9 +79,9 @@ class DashboardView extends ConsumerWidget {
                       Text(
                         'لوحة التحكم',
                         style: TextStyle(
-                          fontSize: 24.sp,
+                          fontSize: 32.sp,
                           fontWeight: FontWeight.w700,
-                          color: AppColors.textPrimary,
+                          color: Colors.black,
                           fontFamily: 'Cairo',
                         ),
                       ),
@@ -89,8 +89,8 @@ class DashboardView extends ConsumerWidget {
                       Text(
                         'مرحباً بك في نظام تاجر لإدارة تجارة الجملة والقطاعي',
                         style: TextStyle(
-                          fontSize: 14.sp,
-                          color: AppColors.textSecondary,
+                          fontSize: 20.sp,
+                          color: Colors.black87,
                           fontFamily: 'Cairo',
                         ),
                       ),
@@ -264,8 +264,8 @@ class DashboardView extends ConsumerWidget {
   ) {
     return ElevatedButton.icon(
       onPressed: onTap,
-      icon: Icon(icon, size: 18),
-      label: Text(label, style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold)),
+      icon: Icon(icon, size: 22),
+      label: Text(label, style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold, fontSize: 20.sp)),
       style: ElevatedButton.styleFrom(
         backgroundColor: color,
         foregroundColor: Colors.white,
@@ -313,7 +313,7 @@ class DashboardView extends ConsumerWidget {
                   'مباشر',
                   style: TextStyle(
                     color: AppColors.success,
-                    fontSize: 11.sp,
+                    fontSize: 16.sp,
                     fontWeight: FontWeight.w600,
                     fontFamily: 'Cairo',
                   ),
@@ -325,9 +325,10 @@ class DashboardView extends ConsumerWidget {
           Text(
             title,
             style: TextStyle(
-              fontSize: 13.sp,
-              color: AppColors.textSecondary,
+              fontSize: 20.sp,
+              color: Colors.black,
               fontFamily: 'Cairo',
+              fontWeight: FontWeight.w600,
             ),
           ),
           SizedBox(height: 4.h),
@@ -339,9 +340,9 @@ class DashboardView extends ConsumerWidget {
                 child: Text(
                   value,
                   style: TextStyle(
-                    fontSize: 22.sp,
+                    fontSize: 28.sp,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
+                    color: Colors.black,
                     fontFamily: 'Cairo',
                   ),
                 ),
@@ -352,8 +353,8 @@ class DashboardView extends ConsumerWidget {
                 child: Text(
                   unit,
                   style: TextStyle(
-                    fontSize: 12.sp,
-                    color: AppColors.textSecondary,
+                    fontSize: 18.sp,
+                    color: Colors.black87,
                     fontFamily: 'Cairo',
                   ),
                 ),
@@ -396,18 +397,19 @@ class DashboardView extends ConsumerWidget {
                 Text(
                   value,
                   style: TextStyle(
-                    fontSize: 20.sp,
+                    fontSize: 26.sp,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
+                    color: Colors.black,
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),
                 Text(
                   title,
                   style: TextStyle(
-                    fontSize: 12.sp,
-                    color: AppColors.textSecondary,
+                    fontSize: 18.sp,
+                    color: Colors.black87,
                     fontFamily: 'Cairo',
+                    fontWeight: FontWeight.w600,
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -437,14 +439,14 @@ class DashboardView extends ConsumerWidget {
         children: [
           Row(
             children: [
-              Icon(LucideIcons.barChart2, color: AppColors.primary, size: 20),
+              Icon(LucideIcons.barChart2, color: AppColors.primary, size: 24),
               SizedBox(width: 8.w),
               Text(
                 title,
                 style: TextStyle(
-                  fontSize: 16.sp,
+                  fontSize: 22.sp,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
+                  color: Colors.black,
                   fontFamily: 'Cairo',
                 ),
               ),
@@ -468,8 +470,8 @@ class DashboardView extends ConsumerWidget {
                         Text(
                           entry.value > 0 ? entry.value.toStringAsFixed(0) : '0',
                           style: TextStyle(
-                            fontSize: 10.sp,
-                            color: AppColors.textSecondary,
+                            fontSize: 16.sp,
+                            color: Colors.black,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -494,8 +496,8 @@ class DashboardView extends ConsumerWidget {
                         Text(
                           entry.key,
                           style: TextStyle(
-                            fontSize: 11.sp,
-                            color: AppColors.textSecondary,
+                            fontSize: 16.sp,
+                            color: Colors.black,
                             fontFamily: 'Cairo',
                           ),
                         ),
@@ -525,14 +527,14 @@ class DashboardView extends ConsumerWidget {
         children: [
           Row(
             children: [
-              Icon(LucideIcons.bell, size: 18, color: AppColors.warning),
+              Icon(LucideIcons.bell, size: 24, color: AppColors.warning),
               SizedBox(width: 8.w),
               Text(
                 'تنبيهات النظام',
                 style: TextStyle(
-                  fontSize: 16.sp,
+                  fontSize: 22.sp,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
+                  color: Colors.black,
                   fontFamily: 'Cairo',
                 ),
               ),
@@ -547,7 +549,7 @@ class DashboardView extends ConsumerWidget {
                   '${lowStockProducts.length}',
                   style: TextStyle(
                     color: lowStockProducts.isEmpty ? AppColors.success : AppColors.error,
-                    fontSize: 12.sp,
+                    fontSize: 18.sp,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -570,8 +572,9 @@ class DashboardView extends ConsumerWidget {
                         Text(
                           'لا توجد تنبيهات - المخزون ممتاز',
                           style: TextStyle(
-                            color: AppColors.textSecondary,
+                            color: Colors.black,
                             fontFamily: 'Cairo',
+                            fontSize: 20.sp,
                           ),
                         ),
                       ],
@@ -591,15 +594,16 @@ class DashboardView extends ConsumerWidget {
                           style: TextStyle(
                             fontFamily: 'Cairo',
                             fontWeight: FontWeight.bold,
-                            fontSize: 13.sp,
+                            fontSize: 20.sp,
+                            color: Colors.black,
                           ),
                         ),
                         subtitle: Text(
                           'المتبقي: ${item.currentQuantity} قطعة (الحد الأدنى: ${item.minQuantity})',
                           style: TextStyle(
                             fontFamily: 'Cairo',
-                            fontSize: 11.sp,
-                            color: AppColors.textSecondary,
+                            fontSize: 18.sp,
+                            color: Colors.black87,
                           ),
                         ),
                       );
@@ -632,14 +636,14 @@ class DashboardView extends ConsumerWidget {
         children: [
           Row(
             children: [
-              Icon(icon, size: 18, color: AppColors.primary),
+              Icon(icon, size: 24, color: AppColors.primary),
               SizedBox(width: 8.w),
               Text(
                 title,
                 style: TextStyle(
-                  fontSize: 16.sp,
+                  fontSize: 22.sp,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
+                  color: Colors.black,
                   fontFamily: 'Cairo',
                 ),
               ),
@@ -652,8 +656,9 @@ class DashboardView extends ConsumerWidget {
                     child: Text(
                       'لا توجد فواتير بعد',
                       style: TextStyle(
-                        color: AppColors.textTertiary,
+                        color: Colors.black54,
                         fontFamily: 'Cairo',
+                        fontSize: 20.sp,
                       ),
                     ),
                   )
@@ -671,15 +676,16 @@ class DashboardView extends ConsumerWidget {
                           style: TextStyle(
                             fontFamily: 'Cairo',
                             fontWeight: FontWeight.bold,
-                            fontSize: 13.sp,
+                            fontSize: 20.sp,
+                            color: Colors.black,
                           ),
                         ),
                         subtitle: Text(
                           intl.DateFormat('yyyy/MM/dd HH:mm').format(inv.createdAt),
                           style: TextStyle(
                             fontFamily: 'Cairo',
-                            fontSize: 11.sp,
-                            color: AppColors.textSecondary,
+                            fontSize: 18.sp,
+                            color: Colors.black87,
                           ),
                         ),
                         trailing: Text(
@@ -688,6 +694,7 @@ class DashboardView extends ConsumerWidget {
                             fontFamily: 'Cairo',
                             fontWeight: FontWeight.bold,
                             color: AppColors.primary,
+                            fontSize: 20.sp,
                           ),
                         ),
                       );
@@ -717,14 +724,14 @@ class DashboardView extends ConsumerWidget {
         children: [
           Row(
             children: [
-              Icon(icon, size: 18, color: AppColors.primary),
+              Icon(icon, size: 24, color: AppColors.primary),
               SizedBox(width: 8.w),
               Text(
                 title,
                 style: TextStyle(
-                  fontSize: 16.sp,
+                  fontSize: 22.sp,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
+                  color: Colors.black,
                   fontFamily: 'Cairo',
                 ),
               ),
@@ -737,8 +744,9 @@ class DashboardView extends ConsumerWidget {
                     child: Text(
                       'لا توجد منتجات بعد',
                       style: TextStyle(
-                        color: AppColors.textTertiary,
+                        color: Colors.black54,
                         fontFamily: 'Cairo',
+                        fontSize: 20.sp,
                       ),
                     ),
                   )
@@ -756,7 +764,7 @@ class DashboardView extends ConsumerWidget {
                           child: Text(
                             '${index + 1}',
                             style: TextStyle(
-                              fontSize: 11.sp,
+                              fontSize: 16.sp,
                               fontWeight: FontWeight.bold,
                               color: AppColors.primary,
                             ),
@@ -767,15 +775,16 @@ class DashboardView extends ConsumerWidget {
                           style: TextStyle(
                             fontFamily: 'Cairo',
                             fontWeight: FontWeight.bold,
-                            fontSize: 13.sp,
+                            fontSize: 20.sp,
+                            color: Colors.black,
                           ),
                         ),
                         subtitle: Text(
                           'المخزون الحالي: ${p.currentQuantity}',
                           style: TextStyle(
                             fontFamily: 'Cairo',
-                            fontSize: 11.sp,
-                            color: AppColors.textSecondary,
+                            fontSize: 18.sp,
+                            color: Colors.black87,
                           ),
                         ),
                         trailing: Text(
@@ -784,6 +793,7 @@ class DashboardView extends ConsumerWidget {
                             fontFamily: 'Cairo',
                             fontWeight: FontWeight.bold,
                             color: AppColors.success,
+                            fontSize: 20.sp,
                           ),
                         ),
                       );

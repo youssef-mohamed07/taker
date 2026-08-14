@@ -7,6 +7,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/di/providers.dart';
 import '../../../../core/database/app_database.dart';
 import '../../../../core/database/db_helpers.dart';
+import '../../../../core/errors/app_error_handler.dart';
 
 class TreasuryView extends ConsumerStatefulWidget {
   const TreasuryView({super.key});
@@ -16,28 +17,81 @@ class TreasuryView extends ConsumerStatefulWidget {
 }
 
 class _TreasuryViewState extends ConsumerState<TreasuryView> {
+  String _filter = 'TODAY'; // ALL, TODAY, SHIFT
+
   @override
   Widget build(BuildContext context) {
     final transactionsAsync = ref.watch(treasuryTransactionsStreamProvider);
+    final shiftsAsync = ref.watch(shiftsStreamProvider);
     final db = ref.watch(databaseProvider);
 
     final transactions = transactionsAsync.value ?? [];
+    final shifts = shiftsAsync.value ?? [];
+    final openShift = shifts.where((s) => s.status == 'open').firstOrNull;
 
-    final totalIncome = transactions
+    final now = DateTime.now();
+    final todayStart = DateTime(now.year, now.month, now.day);
+
+    // Calculate totals overall
+    final totalIncomeAll = transactions
         .where((t) {
           final type = t.type.toUpperCase();
           return type == 'INCOME' || type == 'SALE' || type == 'DEPOSIT' || type == 'IN';
         })
         .fold<double>(0, (sum, t) => sum + t.amount);
 
-    final totalExpense = transactions
+    final totalExpenseAll = transactions
         .where((t) {
           final type = t.type.toUpperCase();
           return type == 'EXPENSE' || type == 'PURCHASE' || type == 'WITHDRAW' || type == 'WITHDRAWAL' || type == 'OUT';
         })
         .fold<double>(0, (sum, t) => sum + t.amount);
 
-    final currentBalance = totalIncome - totalExpense;
+    final currentBalance = totalIncomeAll - totalExpenseAll;
+
+    // Today's metrics
+    final todayTxs = transactions.where((t) => t.createdAt.isAfter(todayStart)).toList();
+    final todayIncome = todayTxs
+        .where((t) {
+          final type = t.type.toUpperCase();
+          return type == 'INCOME' || type == 'SALE' || type == 'DEPOSIT' || type == 'IN';
+        })
+        .fold<double>(0, (sum, t) => sum + t.amount);
+
+    final todayExpense = todayTxs
+        .where((t) {
+          final type = t.type.toUpperCase();
+          return type == 'EXPENSE' || type == 'PURCHASE' || type == 'WITHDRAW' || type == 'WITHDRAWAL' || type == 'OUT';
+        })
+        .fold<double>(0, (sum, t) => sum + t.amount);
+
+    // Active Shift metrics
+    double shiftIncome = 0;
+    double shiftExpense = 0;
+    if (openShift != null) {
+      final shiftTxs = transactions.where((t) =>
+          t.shiftId == openShift.id ||
+          (t.createdAt.isAfter(openShift.openedAt) && t.shiftId == null));
+      for (final tx in shiftTxs) {
+        final typeUpper = tx.type.toUpperCase();
+        if (typeUpper == 'INCOME' || typeUpper == 'SALE' || typeUpper == 'DEPOSIT' || typeUpper == 'IN') {
+          shiftIncome += tx.amount;
+        } else {
+          shiftExpense += tx.amount;
+        }
+      }
+    }
+
+    // Filtered list
+    final filteredTxs = transactions.where((t) {
+      if (_filter == 'TODAY') {
+        return t.createdAt.isAfter(todayStart);
+      } else if (_filter == 'SHIFT') {
+        if (openShift == null) return false;
+        return t.shiftId == openShift.id || t.createdAt.isAfter(openShift.openedAt);
+      }
+      return true;
+    }).toList();
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -54,7 +108,7 @@ class _TreasuryViewState extends ConsumerState<TreasuryView> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'إدارة الخزنة والنقدية',
+                        'إدارة الخزنة واليومية',
                         style: TextStyle(
                           fontSize: 24.sp,
                           fontWeight: FontWeight.w700,
@@ -64,7 +118,7 @@ class _TreasuryViewState extends ConsumerState<TreasuryView> {
                       ),
                       SizedBox(height: 4.h),
                       Text(
-                        'متابعة حركة النقدية، الإيداعات، السحوبات، والمصروفات اليومية',
+                        'متابعة حركة النقدية اليومية، الشيفت الحالي، والإيداعات والمصروفات',
                         style: TextStyle(
                           fontSize: 14.sp,
                           color: AppColors.textSecondary,
@@ -74,6 +128,24 @@ class _TreasuryViewState extends ConsumerState<TreasuryView> {
                     ],
                   ),
                 ),
+                ElevatedButton.icon(
+                  onPressed: () => _showDailySummaryDialog(
+                    context,
+                    todayIncome: todayIncome,
+                    todayExpense: todayExpense,
+                    currentBalance: currentBalance,
+                    openShift: openShift,
+                  ),
+                  icon: Icon(LucideIcons.fileSpreadsheet, size: 18),
+                  label: Text('تصفية وتقفيلة اليوم', style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.r)),
+                  ),
+                ),
+                SizedBox(width: 8.w),
                 ElevatedButton.icon(
                   onPressed: () => _showAddTransactionDialog(context, db, isIncome: true),
                   icon: Icon(LucideIcons.arrowDownCircle, size: 18),
@@ -99,40 +171,46 @@ class _TreasuryViewState extends ConsumerState<TreasuryView> {
                 ),
               ],
             ),
-            SizedBox(height: 24.h),
+            SizedBox(height: 20.h),
 
-            // Balance Card
-            Container(
-              width: double.infinity,
-              padding: EdgeInsets.all(24.w),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [AppColors.primary, AppColors.primaryLight],
-                  begin: Alignment.topRight,
-                  end: Alignment.bottomLeft,
-                ),
-                borderRadius: BorderRadius.circular(12.r),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.primary.withValues(alpha: 0.3),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  Expanded(
+            // Top Summary Cards
+            Row(
+              children: [
+                Expanded(
+                  flex: 3,
+                  child: Container(
+                    padding: EdgeInsets.all(20.w),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [AppColors.primary, AppColors.primaryLight],
+                        begin: Alignment.topRight,
+                        end: Alignment.bottomLeft,
+                      ),
+                      borderRadius: BorderRadius.circular(12.r),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.primary.withValues(alpha: 0.25),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'إجمالي رصيد الخزنة الحالي',
-                          style: TextStyle(
-                            color: Colors.white70,
-                            fontSize: 14.sp,
-                            fontFamily: 'Cairo',
-                          ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'رصيد الخزنة الكلي الحالي',
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontSize: 13.sp,
+                                fontFamily: 'Cairo',
+                              ),
+                            ),
+                            Icon(LucideIcons.wallet, color: Colors.white, size: 22),
+                          ],
                         ),
                         SizedBox(height: 8.h),
                         FittedBox(
@@ -141,7 +219,7 @@ class _TreasuryViewState extends ConsumerState<TreasuryView> {
                             '${currentBalance.toStringAsFixed(2)} ج.م',
                             style: TextStyle(
                               color: Colors.white,
-                              fontSize: 32.sp,
+                              fontSize: 30.sp,
                               fontWeight: FontWeight.w700,
                               fontFamily: 'Cairo',
                             ),
@@ -150,34 +228,114 @@ class _TreasuryViewState extends ConsumerState<TreasuryView> {
                       ],
                     ),
                   ),
-                  SizedBox(width: 16.w),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(
-                        'إجمالي المقبوضات: +${totalIncome.toStringAsFixed(2)} ج.م',
-                        style: TextStyle(color: Colors.white, fontFamily: 'Cairo', fontWeight: FontWeight.bold, fontSize: 13.sp),
+                ),
+                SizedBox(width: 12.w),
+                Expanded(
+                  flex: 2,
+                  child: _buildTodayCard(
+                    title: 'مقبوضات اليوم (+)',
+                    amount: todayIncome,
+                    color: AppColors.success,
+                    icon: LucideIcons.trendingUp,
+                  ),
+                ),
+                SizedBox(width: 12.w),
+                Expanded(
+                  flex: 2,
+                  child: _buildTodayCard(
+                    title: 'مصروفات اليوم (-)',
+                    amount: todayExpense,
+                    color: AppColors.error,
+                    icon: LucideIcons.trendingDown,
+                  ),
+                ),
+                SizedBox(width: 12.w),
+                Expanded(
+                  flex: 2,
+                  child: _buildTodayCard(
+                    title: 'صافي نقدية اليوم',
+                    amount: todayIncome - todayExpense,
+                    color: (todayIncome - todayExpense) >= 0 ? AppColors.success : AppColors.error,
+                    icon: LucideIcons.coins,
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 16.h),
+
+            // Active Shift Status Line inside Treasury
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10.r),
+                border: Border.all(
+                  color: openShift != null ? AppColors.success : AppColors.border,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    openShift != null ? LucideIcons.checkCircle : LucideIcons.alertCircle,
+                    color: openShift != null ? AppColors.success : AppColors.warning,
+                    size: 20,
+                  ),
+                  SizedBox(width: 10.w),
+                  Expanded(
+                    child: Text(
+                      openShift != null
+                          ? 'الشيفت النشط: وردية #${openShift.id} | رصيد البداية: ${openShift.openingBalance.toStringAsFixed(2)} ج.م | المتوقع حالياً: ${(openShift.openingBalance + shiftIncome - shiftExpense).toStringAsFixed(2)} ج.م'
+                          : 'لا يوجد شيفت مفتوح حالياً. يمكنك تتبع النقدية أو فتح شيفت جديد من إدارة الشيفتات.',
+                      style: TextStyle(
+                        fontFamily: 'Cairo',
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
                       ),
-                      SizedBox(height: 4.h),
-                      Text(
-                        'إجمالي المصروفات: -${totalExpense.toStringAsFixed(2)} ج.م',
-                        style: TextStyle(color: Colors.white70, fontFamily: 'Cairo', fontSize: 13.sp),
-                      ),
-                    ],
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                 ],
               ),
             ),
-            SizedBox(height: 24.h),
+            SizedBox(height: 20.h),
 
-            Text(
-              'سجل حركات الخزنة النقدية',
-              style: TextStyle(
-                fontSize: 18.sp,
-                fontWeight: FontWeight.bold,
-                fontFamily: 'Cairo',
-                color: AppColors.textPrimary,
-              ),
+            // Transactions Header & Filters
+            Row(
+              children: [
+                Text(
+                  'سجل حركات الخزنة والنقدية',
+                  style: TextStyle(
+                    fontSize: 18.sp,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'Cairo',
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                const Spacer(),
+                SegmentedButton<String>(
+                  segments: const [
+                    ButtonSegment(
+                      value: 'TODAY',
+                      label: Text('حركات اليوم', style: TextStyle(fontFamily: 'Cairo', fontSize: 12)),
+                    ),
+                    ButtonSegment(
+                      value: 'SHIFT',
+                      label: Text('الشيفت الحالي', style: TextStyle(fontFamily: 'Cairo', fontSize: 12)),
+                    ),
+                    ButtonSegment(
+                      value: 'ALL',
+                      label: Text('كل الحركات', style: TextStyle(fontFamily: 'Cairo', fontSize: 12)),
+                    ),
+                  ],
+                  selected: {_filter},
+                  onSelectionChanged: (Set<String> newSelection) {
+                    setState(() {
+                      _filter = newSelection.first;
+                    });
+                  },
+                ),
+              ],
             ),
             SizedBox(height: 12.h),
 
@@ -190,33 +348,33 @@ class _TreasuryViewState extends ConsumerState<TreasuryView> {
                   borderRadius: BorderRadius.circular(12.r),
                   border: Border.all(color: AppColors.border),
                 ),
-                child: transactions.isEmpty
+                child: filteredTxs.isEmpty
                     ? Center(
                         child: Text(
-                          'لا توجد حركات في الخزنة حتى الآن',
-                          style: TextStyle(color: AppColors.textTertiary, fontFamily: 'Cairo'),
+                          'لا توجد حركات نقدية تطابق التصفية الحالية',
+                          style: TextStyle(color: AppColors.textTertiary, fontFamily: 'Cairo', fontSize: 15.sp),
                         ),
                       )
                     : ListView.separated(
-                        itemCount: transactions.length,
+                        itemCount: filteredTxs.length,
                         separatorBuilder: (_, __) => Divider(height: 1.h),
                         itemBuilder: (context, index) {
-                          final t = transactions[index];
+                          final t = filteredTxs[index];
                           final typeUpper = t.type.toUpperCase();
                           final isInc = typeUpper == 'INCOME' || typeUpper == 'SALE' || typeUpper == 'DEPOSIT' || typeUpper == 'IN';
 
                           return ListTile(
-                            contentPadding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 8.h),
+                            contentPadding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 6.h),
                             leading: Container(
-                              padding: EdgeInsets.all(10.w),
+                              padding: EdgeInsets.all(8.w),
                               decoration: BoxDecoration(
                                 color: isInc ? AppColors.success.withValues(alpha: 0.1) : AppColors.error.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(10.r),
+                                borderRadius: BorderRadius.circular(8.r),
                               ),
                               child: Icon(
                                 isInc ? LucideIcons.arrowDownCircle : LucideIcons.arrowUpCircle,
                                 color: isInc ? AppColors.success : AppColors.error,
-                                size: 22,
+                                size: 20,
                               ),
                             ),
                             title: Row(
@@ -224,7 +382,7 @@ class _TreasuryViewState extends ConsumerState<TreasuryView> {
                                 Expanded(
                                   child: Text(
                                     t.description ?? (isInc ? 'إيداع/قبض نقدي' : 'صرف/مصروفات'),
-                                    style: TextStyle(fontWeight: FontWeight.bold, fontFamily: 'Cairo'),
+                                    style: TextStyle(fontWeight: FontWeight.bold, fontFamily: 'Cairo', fontSize: 14.sp),
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
@@ -239,7 +397,7 @@ class _TreasuryViewState extends ConsumerState<TreasuryView> {
                                     t.type.toUpperCase(),
                                     style: TextStyle(
                                       color: isInc ? AppColors.success : AppColors.error,
-                                      fontSize: 10.sp,
+                                      fontSize: 11.sp,
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
@@ -247,14 +405,14 @@ class _TreasuryViewState extends ConsumerState<TreasuryView> {
                               ],
                             ),
                             subtitle: Text(
-                              'التاريخ: ${intl.DateFormat('yyyy/MM/dd HH:mm').format(t.createdAt)}',
+                              'التاريخ: ${intl.DateFormat('yyyy/MM/dd HH:mm').format(t.createdAt)} ${t.shiftId != null ? '| وردية #${t.shiftId}' : ''}',
                               style: TextStyle(color: AppColors.textSecondary, fontFamily: 'Cairo', fontSize: 12.sp),
                             ),
                             trailing: Text(
                               '${isInc ? '+' : '-'}${t.amount.toStringAsFixed(2)} ج.م',
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
-                                fontSize: 16.sp,
+                                fontSize: 15.sp,
                                 color: isInc ? AppColors.success : AppColors.error,
                               ),
                             ),
@@ -262,6 +420,179 @@ class _TreasuryViewState extends ConsumerState<TreasuryView> {
                         },
                       ),
               ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTodayCard({
+    required String title,
+    required double amount,
+    required Color color,
+    required IconData icon,
+  }) {
+    return Container(
+      padding: EdgeInsets.all(16.w),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                title,
+                style: TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 12.sp,
+                  fontFamily: 'Cairo',
+                ),
+              ),
+              Icon(icon, color: color, size: 18),
+            ],
+          ),
+          SizedBox(height: 6.h),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              '${amount.toStringAsFixed(2)} ج.م',
+              style: TextStyle(
+                color: color,
+                fontSize: 20.sp,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'Cairo',
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showDailySummaryDialog(
+    BuildContext context, {
+    required double todayIncome,
+    required double todayExpense,
+    required double currentBalance,
+    required Shift? openShift,
+  }) {
+    final todayNet = todayIncome - todayExpense;
+    final dateStr = intl.DateFormat('yyyy/MM/dd').format(DateTime.now());
+
+    showDialog(
+      context: context,
+      builder: (dialogCtx) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14.r)),
+          title: Row(
+            children: [
+              Icon(LucideIcons.fileSpreadsheet, color: AppColors.primary),
+              SizedBox(width: 8.w),
+              Text(
+                'تقرير تقفيلة وتصفية اليوم ($dateStr)',
+                style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold, fontSize: 16.sp),
+              ),
+            ],
+          ),
+          content: SizedBox(
+            width: 450.w,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: EdgeInsets.all(16.w),
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceVariant,
+                    borderRadius: BorderRadius.circular(10.r),
+                  ),
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text('إجمالي مقبوضات ومبيعات اليوم:', style: TextStyle(fontFamily: 'Cairo', fontSize: 14.sp)),
+                          Text('+${todayIncome.toStringAsFixed(2)} ج.م',
+                              style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold, color: AppColors.success, fontSize: 14.sp)),
+                        ],
+                      ),
+                      SizedBox(height: 10.h),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text('إجمالي مصروفات اليوم:', style: TextStyle(fontFamily: 'Cairo', fontSize: 14.sp)),
+                          Text('-${todayExpense.toStringAsFixed(2)} ج.م',
+                              style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold, color: AppColors.error, fontSize: 14.sp)),
+                        ],
+                      ),
+                      Divider(height: 20.h),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text('صافي الحركة المالية لليوم:', style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold, fontSize: 14.sp)),
+                          Text('${todayNet.toStringAsFixed(2)} ج.م',
+                              style: TextStyle(
+                                  fontFamily: 'Cairo',
+                                  fontWeight: FontWeight.bold,
+                                  color: todayNet >= 0 ? AppColors.success : AppColors.error,
+                                  fontSize: 15.sp)),
+                        ],
+                      ),
+                      SizedBox(height: 8.h),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text('رصيد الخزنة الإجمالي المتاح:', style: TextStyle(fontFamily: 'Cairo', color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 14.sp)),
+                          Text('${currentBalance.toStringAsFixed(2)} ج.م',
+                              style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold, color: AppColors.primary, fontSize: 16.sp)),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(height: 16.h),
+                if (openShift != null)
+                  Container(
+                    padding: EdgeInsets.all(12.w),
+                    decoration: BoxDecoration(
+                      color: AppColors.warningLight,
+                      borderRadius: BorderRadius.circular(8.r),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(LucideIcons.alertTriangle, color: AppColors.warning, size: 20),
+                        SizedBox(width: 8.w),
+                        Expanded(
+                          child: Text(
+                            'تنبيه: يوجد وردية نشطة حالياً (#${openShift.id}). يفضل إغلاق الوردية قبل اعتماد التصفية الكلية.',
+                            style: TextStyle(fontFamily: 'Cairo', fontSize: 12.sp, color: AppColors.textPrimary),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogCtx),
+              child: Text('إغلاق التقرير', style: TextStyle(fontFamily: 'Cairo', color: AppColors.textSecondary)),
+            ),
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(backgroundColor: AppColors.success),
+              onPressed: () {
+                Navigator.pop(dialogCtx);
+                AppErrorHandler.showSuccessSnackBar(context, 'تمت مراجعة وتصفية حسابات اليوم بنجاح!');
+              },
+              icon: const Icon(LucideIcons.checkCheck, size: 18),
+              label: Text('اعتماد تصفية اليوم', style: TextStyle(fontFamily: 'Cairo', color: Colors.white, fontWeight: FontWeight.bold)),
             ),
           ],
         ),

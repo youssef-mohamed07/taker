@@ -264,6 +264,12 @@ class DbHelpers {
   static Future<int> deleteProduct(AppDatabase db, int id) {
     return db.transaction(() async {
       await (db.delete(db.productBarcodes)..where((t) => t.productId.equals(id))).go();
+      await (db.delete(db.stockMovements)..where((t) => t.productId.equals(id))).go();
+      await (db.delete(db.inventoryCountItems)..where((t) => t.productId.equals(id))).go();
+      await (db.delete(db.invoiceItems)..where((t) => t.productId.equals(id))).go();
+      await (db.delete(db.salesReturnItems)..where((t) => t.productId.equals(id))).go();
+      await (db.delete(db.purchaseItems)..where((t) => t.productId.equals(id))).go();
+      await (db.delete(db.purchaseReturnItems)..where((t) => t.productId.equals(id))).go();
       return (db.delete(db.products)..where((t) => t.id.equals(id))).go();
     });
   }
@@ -1127,8 +1133,8 @@ class DbHelpers {
       }
 
       // 5. Reverse supplier balance if credit
-      if (invoice.supplierId != null && invoice.remaining > 0) {
-        final supplier = await (db.select(db.suppliers)..where((t) => t.id.equals(invoice.supplierId!))).getSingleOrNull();
+      if (invoice.remaining > 0) {
+        final supplier = await (db.select(db.suppliers)..where((t) => t.id.equals(invoice.supplierId))).getSingleOrNull();
         if (supplier != null) {
           await (db.update(db.suppliers)..where((t) => t.id.equals(supplier.id)))
               .write(SuppliersCompanion(balance: Value(supplier.balance - invoice.remaining)));

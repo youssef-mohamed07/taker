@@ -15,9 +15,9 @@ class AppColors {
   static const Color sidebarBg = Color(0xFF1E293B);
   static const Color sidebarBgHover = Color(0xFF334155);
   static const Color sidebarBgActive = Color(0xFF1565C0);
-  static const Color sidebarText = Color(0xFFCBD5E1);
+  static const Color sidebarText = Color(0xFFE2E8F0);
   static const Color sidebarTextActive = Color(0xFFFFFFFF);
-  static const Color sidebarIcon = Color(0xFF94A3B8);
+  static const Color sidebarIcon = Color(0xFFCBD5E1);
   static const Color sidebarIconActive = Color(0xFFFFFFFF);
   static const Color sidebarDivider = Color(0xFF334155);
 
@@ -29,8 +29,8 @@ class AppColors {
 
   // ─── Text ────────────────────────────────────────────
   static const Color textPrimary = Color(0xFF1E293B);
-  static const Color textSecondary = Color(0xFF64748B);
-  static const Color textTertiary = Color(0xFF94A3B8);
+  static const Color textSecondary = Color(0xFF374151);
+  static const Color textTertiary = Color(0xFF4B5563);
   static const Color textOnPrimary = Color(0xFFFFFFFF);
 
   // ─── Status ──────────────────────────────────────────

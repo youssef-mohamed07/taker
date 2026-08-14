@@ -38,6 +38,12 @@ final productsStreamProvider = StreamProvider<List<Product>>((ref) {
   return db.select(db.products).watch();
 });
 
+final productBarcodesStreamProvider =
+    StreamProvider<List<ProductBarcode>>((ref) {
+  final db = ref.watch(databaseProvider);
+  return db.select(db.productBarcodes).watch();
+});
+
 final categoriesStreamProvider = StreamProvider<List<Category>>((ref) {
   final db = ref.watch(databaseProvider);
   return db.select(db.categories).watch();

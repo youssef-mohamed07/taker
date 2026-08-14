@@ -13,7 +13,7 @@ class TagerApp extends ConsumerWidget {
     final isDark = ref.watch(themeModeProvider);
 
     return ScreenUtilInit(
-      designSize: const Size(1920, 1080), // Desktop/Tablet typical size as base, we can adjust later
+      designSize: const Size(1024, 768),
       minTextAdapt: true,
       splitScreenMode: true,
       builder: (context, child) {
