@@ -16387,6 +16387,890 @@ class SalaryPaymentsCompanion extends UpdateCompanion<SalaryPayment> {
   }
 }
 
+class $FawryMachineTable extends FawryMachine
+    with TableInfo<$FawryMachineTable, FawryMachineData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $FawryMachineTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _digitalBalanceMeta = const VerificationMeta(
+    'digitalBalance',
+  );
+  @override
+  late final GeneratedColumn<double> digitalBalance = GeneratedColumn<double>(
+    'digital_balance',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _cashCollectedMeta = const VerificationMeta(
+    'cashCollected',
+  );
+  @override
+  late final GeneratedColumn<double> cashCollected = GeneratedColumn<double>(
+    'cash_collected',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _totalProfitsMeta = const VerificationMeta(
+    'totalProfits',
+  );
+  @override
+  late final GeneratedColumn<double> totalProfits = GeneratedColumn<double>(
+    'total_profits',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    digitalBalance,
+    cashCollected,
+    totalProfits,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'fawry_machine';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<FawryMachineData> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('digital_balance')) {
+      context.handle(
+        _digitalBalanceMeta,
+        digitalBalance.isAcceptableOrUnknown(
+          data['digital_balance']!,
+          _digitalBalanceMeta,
+        ),
+      );
+    }
+    if (data.containsKey('cash_collected')) {
+      context.handle(
+        _cashCollectedMeta,
+        cashCollected.isAcceptableOrUnknown(
+          data['cash_collected']!,
+          _cashCollectedMeta,
+        ),
+      );
+    }
+    if (data.containsKey('total_profits')) {
+      context.handle(
+        _totalProfitsMeta,
+        totalProfits.isAcceptableOrUnknown(
+          data['total_profits']!,
+          _totalProfitsMeta,
+        ),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  FawryMachineData map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return FawryMachineData(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      digitalBalance: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}digital_balance'],
+      )!,
+      cashCollected: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}cash_collected'],
+      )!,
+      totalProfits: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}total_profits'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $FawryMachineTable createAlias(String alias) {
+    return $FawryMachineTable(attachedDatabase, alias);
+  }
+}
+
+class FawryMachineData extends DataClass
+    implements Insertable<FawryMachineData> {
+  final int id;
+
+  /// The virtual digital balance on the Fawry machine (رصيد الماكينة الافتراضي)
+  final double digitalBalance;
+
+  /// The physical cash collected from customers that belongs to Fawry
+  /// This sits in the main safe but needs to be tracked separately.
+  final double cashCollected;
+
+  /// Total profits accumulated from Fawry transactions
+  final double totalProfits;
+  final DateTime updatedAt;
+  const FawryMachineData({
+    required this.id,
+    required this.digitalBalance,
+    required this.cashCollected,
+    required this.totalProfits,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['digital_balance'] = Variable<double>(digitalBalance);
+    map['cash_collected'] = Variable<double>(cashCollected);
+    map['total_profits'] = Variable<double>(totalProfits);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  FawryMachineCompanion toCompanion(bool nullToAbsent) {
+    return FawryMachineCompanion(
+      id: Value(id),
+      digitalBalance: Value(digitalBalance),
+      cashCollected: Value(cashCollected),
+      totalProfits: Value(totalProfits),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory FawryMachineData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return FawryMachineData(
+      id: serializer.fromJson<int>(json['id']),
+      digitalBalance: serializer.fromJson<double>(json['digitalBalance']),
+      cashCollected: serializer.fromJson<double>(json['cashCollected']),
+      totalProfits: serializer.fromJson<double>(json['totalProfits']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'digitalBalance': serializer.toJson<double>(digitalBalance),
+      'cashCollected': serializer.toJson<double>(cashCollected),
+      'totalProfits': serializer.toJson<double>(totalProfits),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  FawryMachineData copyWith({
+    int? id,
+    double? digitalBalance,
+    double? cashCollected,
+    double? totalProfits,
+    DateTime? updatedAt,
+  }) => FawryMachineData(
+    id: id ?? this.id,
+    digitalBalance: digitalBalance ?? this.digitalBalance,
+    cashCollected: cashCollected ?? this.cashCollected,
+    totalProfits: totalProfits ?? this.totalProfits,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  FawryMachineData copyWithCompanion(FawryMachineCompanion data) {
+    return FawryMachineData(
+      id: data.id.present ? data.id.value : this.id,
+      digitalBalance: data.digitalBalance.present
+          ? data.digitalBalance.value
+          : this.digitalBalance,
+      cashCollected: data.cashCollected.present
+          ? data.cashCollected.value
+          : this.cashCollected,
+      totalProfits: data.totalProfits.present
+          ? data.totalProfits.value
+          : this.totalProfits,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('FawryMachineData(')
+          ..write('id: $id, ')
+          ..write('digitalBalance: $digitalBalance, ')
+          ..write('cashCollected: $cashCollected, ')
+          ..write('totalProfits: $totalProfits, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, digitalBalance, cashCollected, totalProfits, updatedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is FawryMachineData &&
+          other.id == this.id &&
+          other.digitalBalance == this.digitalBalance &&
+          other.cashCollected == this.cashCollected &&
+          other.totalProfits == this.totalProfits &&
+          other.updatedAt == this.updatedAt);
+}
+
+class FawryMachineCompanion extends UpdateCompanion<FawryMachineData> {
+  final Value<int> id;
+  final Value<double> digitalBalance;
+  final Value<double> cashCollected;
+  final Value<double> totalProfits;
+  final Value<DateTime> updatedAt;
+  const FawryMachineCompanion({
+    this.id = const Value.absent(),
+    this.digitalBalance = const Value.absent(),
+    this.cashCollected = const Value.absent(),
+    this.totalProfits = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+  });
+  FawryMachineCompanion.insert({
+    this.id = const Value.absent(),
+    this.digitalBalance = const Value.absent(),
+    this.cashCollected = const Value.absent(),
+    this.totalProfits = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+  });
+  static Insertable<FawryMachineData> custom({
+    Expression<int>? id,
+    Expression<double>? digitalBalance,
+    Expression<double>? cashCollected,
+    Expression<double>? totalProfits,
+    Expression<DateTime>? updatedAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (digitalBalance != null) 'digital_balance': digitalBalance,
+      if (cashCollected != null) 'cash_collected': cashCollected,
+      if (totalProfits != null) 'total_profits': totalProfits,
+      if (updatedAt != null) 'updated_at': updatedAt,
+    });
+  }
+
+  FawryMachineCompanion copyWith({
+    Value<int>? id,
+    Value<double>? digitalBalance,
+    Value<double>? cashCollected,
+    Value<double>? totalProfits,
+    Value<DateTime>? updatedAt,
+  }) {
+    return FawryMachineCompanion(
+      id: id ?? this.id,
+      digitalBalance: digitalBalance ?? this.digitalBalance,
+      cashCollected: cashCollected ?? this.cashCollected,
+      totalProfits: totalProfits ?? this.totalProfits,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (digitalBalance.present) {
+      map['digital_balance'] = Variable<double>(digitalBalance.value);
+    }
+    if (cashCollected.present) {
+      map['cash_collected'] = Variable<double>(cashCollected.value);
+    }
+    if (totalProfits.present) {
+      map['total_profits'] = Variable<double>(totalProfits.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('FawryMachineCompanion(')
+          ..write('id: $id, ')
+          ..write('digitalBalance: $digitalBalance, ')
+          ..write('cashCollected: $cashCollected, ')
+          ..write('totalProfits: $totalProfits, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $FawryTransactionsTable extends FawryTransactions
+    with TableInfo<$FawryTransactionsTable, FawryTransaction> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $FawryTransactionsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _typeMeta = const VerificationMeta('type');
+  @override
+  late final GeneratedColumn<String> type = GeneratedColumn<String>(
+    'type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _amountMeta = const VerificationMeta('amount');
+  @override
+  late final GeneratedColumn<double> amount = GeneratedColumn<double>(
+    'amount',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _customerPaidMeta = const VerificationMeta(
+    'customerPaid',
+  );
+  @override
+  late final GeneratedColumn<double> customerPaid = GeneratedColumn<double>(
+    'customer_paid',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _profitMeta = const VerificationMeta('profit');
+  @override
+  late final GeneratedColumn<double> profit = GeneratedColumn<double>(
+    'profit',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _descriptionMeta = const VerificationMeta(
+    'description',
+  );
+  @override
+  late final GeneratedColumn<String> description = GeneratedColumn<String>(
+    'description',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _userIdMeta = const VerificationMeta('userId');
+  @override
+  late final GeneratedColumn<int> userId = GeneratedColumn<int>(
+    'user_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES users (id)',
+    ),
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    type,
+    amount,
+    customerPaid,
+    profit,
+    description,
+    userId,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'fawry_transactions';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<FawryTransaction> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('type')) {
+      context.handle(
+        _typeMeta,
+        type.isAcceptableOrUnknown(data['type']!, _typeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_typeMeta);
+    }
+    if (data.containsKey('amount')) {
+      context.handle(
+        _amountMeta,
+        amount.isAcceptableOrUnknown(data['amount']!, _amountMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_amountMeta);
+    }
+    if (data.containsKey('customer_paid')) {
+      context.handle(
+        _customerPaidMeta,
+        customerPaid.isAcceptableOrUnknown(
+          data['customer_paid']!,
+          _customerPaidMeta,
+        ),
+      );
+    }
+    if (data.containsKey('profit')) {
+      context.handle(
+        _profitMeta,
+        profit.isAcceptableOrUnknown(data['profit']!, _profitMeta),
+      );
+    }
+    if (data.containsKey('description')) {
+      context.handle(
+        _descriptionMeta,
+        description.isAcceptableOrUnknown(
+          data['description']!,
+          _descriptionMeta,
+        ),
+      );
+    }
+    if (data.containsKey('user_id')) {
+      context.handle(
+        _userIdMeta,
+        userId.isAcceptableOrUnknown(data['user_id']!, _userIdMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  FawryTransaction map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return FawryTransaction(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      type: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}type'],
+      )!,
+      amount: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}amount'],
+      )!,
+      customerPaid: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}customer_paid'],
+      ),
+      profit: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}profit'],
+      )!,
+      description: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}description'],
+      ),
+      userId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}user_id'],
+      ),
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $FawryTransactionsTable createAlias(String alias) {
+    return $FawryTransactionsTable(attachedDatabase, alias);
+  }
+}
+
+class FawryTransaction extends DataClass
+    implements Insertable<FawryTransaction> {
+  final int id;
+
+  /// 'service' (دفع فاتورة/شحن), 'recharge' (تزويد رصيد من المندوب)
+  final String type;
+
+  /// The amount deducted from or added to the digital balance
+  final double amount;
+
+  /// For 'service' type: How much the customer actually paid in cash
+  final double? customerPaid;
+
+  /// The profit from this specific transaction
+  final double profit;
+  final String? description;
+  final int? userId;
+  final DateTime createdAt;
+  const FawryTransaction({
+    required this.id,
+    required this.type,
+    required this.amount,
+    this.customerPaid,
+    required this.profit,
+    this.description,
+    this.userId,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['type'] = Variable<String>(type);
+    map['amount'] = Variable<double>(amount);
+    if (!nullToAbsent || customerPaid != null) {
+      map['customer_paid'] = Variable<double>(customerPaid);
+    }
+    map['profit'] = Variable<double>(profit);
+    if (!nullToAbsent || description != null) {
+      map['description'] = Variable<String>(description);
+    }
+    if (!nullToAbsent || userId != null) {
+      map['user_id'] = Variable<int>(userId);
+    }
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  FawryTransactionsCompanion toCompanion(bool nullToAbsent) {
+    return FawryTransactionsCompanion(
+      id: Value(id),
+      type: Value(type),
+      amount: Value(amount),
+      customerPaid: customerPaid == null && nullToAbsent
+          ? const Value.absent()
+          : Value(customerPaid),
+      profit: Value(profit),
+      description: description == null && nullToAbsent
+          ? const Value.absent()
+          : Value(description),
+      userId: userId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(userId),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory FawryTransaction.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return FawryTransaction(
+      id: serializer.fromJson<int>(json['id']),
+      type: serializer.fromJson<String>(json['type']),
+      amount: serializer.fromJson<double>(json['amount']),
+      customerPaid: serializer.fromJson<double?>(json['customerPaid']),
+      profit: serializer.fromJson<double>(json['profit']),
+      description: serializer.fromJson<String?>(json['description']),
+      userId: serializer.fromJson<int?>(json['userId']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'type': serializer.toJson<String>(type),
+      'amount': serializer.toJson<double>(amount),
+      'customerPaid': serializer.toJson<double?>(customerPaid),
+      'profit': serializer.toJson<double>(profit),
+      'description': serializer.toJson<String?>(description),
+      'userId': serializer.toJson<int?>(userId),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  FawryTransaction copyWith({
+    int? id,
+    String? type,
+    double? amount,
+    Value<double?> customerPaid = const Value.absent(),
+    double? profit,
+    Value<String?> description = const Value.absent(),
+    Value<int?> userId = const Value.absent(),
+    DateTime? createdAt,
+  }) => FawryTransaction(
+    id: id ?? this.id,
+    type: type ?? this.type,
+    amount: amount ?? this.amount,
+    customerPaid: customerPaid.present ? customerPaid.value : this.customerPaid,
+    profit: profit ?? this.profit,
+    description: description.present ? description.value : this.description,
+    userId: userId.present ? userId.value : this.userId,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  FawryTransaction copyWithCompanion(FawryTransactionsCompanion data) {
+    return FawryTransaction(
+      id: data.id.present ? data.id.value : this.id,
+      type: data.type.present ? data.type.value : this.type,
+      amount: data.amount.present ? data.amount.value : this.amount,
+      customerPaid: data.customerPaid.present
+          ? data.customerPaid.value
+          : this.customerPaid,
+      profit: data.profit.present ? data.profit.value : this.profit,
+      description: data.description.present
+          ? data.description.value
+          : this.description,
+      userId: data.userId.present ? data.userId.value : this.userId,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('FawryTransaction(')
+          ..write('id: $id, ')
+          ..write('type: $type, ')
+          ..write('amount: $amount, ')
+          ..write('customerPaid: $customerPaid, ')
+          ..write('profit: $profit, ')
+          ..write('description: $description, ')
+          ..write('userId: $userId, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    type,
+    amount,
+    customerPaid,
+    profit,
+    description,
+    userId,
+    createdAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is FawryTransaction &&
+          other.id == this.id &&
+          other.type == this.type &&
+          other.amount == this.amount &&
+          other.customerPaid == this.customerPaid &&
+          other.profit == this.profit &&
+          other.description == this.description &&
+          other.userId == this.userId &&
+          other.createdAt == this.createdAt);
+}
+
+class FawryTransactionsCompanion extends UpdateCompanion<FawryTransaction> {
+  final Value<int> id;
+  final Value<String> type;
+  final Value<double> amount;
+  final Value<double?> customerPaid;
+  final Value<double> profit;
+  final Value<String?> description;
+  final Value<int?> userId;
+  final Value<DateTime> createdAt;
+  const FawryTransactionsCompanion({
+    this.id = const Value.absent(),
+    this.type = const Value.absent(),
+    this.amount = const Value.absent(),
+    this.customerPaid = const Value.absent(),
+    this.profit = const Value.absent(),
+    this.description = const Value.absent(),
+    this.userId = const Value.absent(),
+    this.createdAt = const Value.absent(),
+  });
+  FawryTransactionsCompanion.insert({
+    this.id = const Value.absent(),
+    required String type,
+    required double amount,
+    this.customerPaid = const Value.absent(),
+    this.profit = const Value.absent(),
+    this.description = const Value.absent(),
+    this.userId = const Value.absent(),
+    this.createdAt = const Value.absent(),
+  }) : type = Value(type),
+       amount = Value(amount);
+  static Insertable<FawryTransaction> custom({
+    Expression<int>? id,
+    Expression<String>? type,
+    Expression<double>? amount,
+    Expression<double>? customerPaid,
+    Expression<double>? profit,
+    Expression<String>? description,
+    Expression<int>? userId,
+    Expression<DateTime>? createdAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (type != null) 'type': type,
+      if (amount != null) 'amount': amount,
+      if (customerPaid != null) 'customer_paid': customerPaid,
+      if (profit != null) 'profit': profit,
+      if (description != null) 'description': description,
+      if (userId != null) 'user_id': userId,
+      if (createdAt != null) 'created_at': createdAt,
+    });
+  }
+
+  FawryTransactionsCompanion copyWith({
+    Value<int>? id,
+    Value<String>? type,
+    Value<double>? amount,
+    Value<double?>? customerPaid,
+    Value<double>? profit,
+    Value<String?>? description,
+    Value<int?>? userId,
+    Value<DateTime>? createdAt,
+  }) {
+    return FawryTransactionsCompanion(
+      id: id ?? this.id,
+      type: type ?? this.type,
+      amount: amount ?? this.amount,
+      customerPaid: customerPaid ?? this.customerPaid,
+      profit: profit ?? this.profit,
+      description: description ?? this.description,
+      userId: userId ?? this.userId,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (type.present) {
+      map['type'] = Variable<String>(type.value);
+    }
+    if (amount.present) {
+      map['amount'] = Variable<double>(amount.value);
+    }
+    if (customerPaid.present) {
+      map['customer_paid'] = Variable<double>(customerPaid.value);
+    }
+    if (profit.present) {
+      map['profit'] = Variable<double>(profit.value);
+    }
+    if (description.present) {
+      map['description'] = Variable<String>(description.value);
+    }
+    if (userId.present) {
+      map['user_id'] = Variable<int>(userId.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('FawryTransactionsCompanion(')
+          ..write('id: $id, ')
+          ..write('type: $type, ')
+          ..write('amount: $amount, ')
+          ..write('customerPaid: $customerPaid, ')
+          ..write('profit: $profit, ')
+          ..write('description: $description, ')
+          ..write('userId: $userId, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -16441,6 +17325,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $ProductBatchesTable productBatches = $ProductBatchesTable(this);
   late final $WorkersTable workers = $WorkersTable(this);
   late final $SalaryPaymentsTable salaryPayments = $SalaryPaymentsTable(this);
+  late final $FawryMachineTable fawryMachine = $FawryMachineTable(this);
+  late final $FawryTransactionsTable fawryTransactions =
+      $FawryTransactionsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -16480,6 +17367,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     productBatches,
     workers,
     salaryPayments,
+    fawryMachine,
+    fawryTransactions,
   ];
 }
 
@@ -16770,6 +17659,30 @@ final class $$UsersTableReferences
     ).filter((f) => f.userId.id.sqlEquals($_itemColumn<int>('id')!));
 
     final cache = $_typedResult.readTableOrNull(_salaryPaymentsRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<$FawryTransactionsTable, List<FawryTransaction>>
+  _fawryTransactionsRefsTable(_$AppDatabase db) =>
+      MultiTypedResultKey.fromTable(
+        db.fawryTransactions,
+        aliasName: $_aliasNameGenerator(
+          db.users.id,
+          db.fawryTransactions.userId,
+        ),
+      );
+
+  $$FawryTransactionsTableProcessedTableManager get fawryTransactionsRefs {
+    final manager = $$FawryTransactionsTableTableManager(
+      $_db,
+      $_db.fawryTransactions,
+    ).filter((f) => f.userId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _fawryTransactionsRefsTable($_db),
+    );
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: cache),
     );
@@ -17135,6 +18048,31 @@ class $$UsersTableFilterComposer extends Composer<_$AppDatabase, $UsersTable> {
           }) => $$SalaryPaymentsTableFilterComposer(
             $db: $db,
             $table: $db.salaryPayments,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> fawryTransactionsRefs(
+    Expression<bool> Function($$FawryTransactionsTableFilterComposer f) f,
+  ) {
+    final $$FawryTransactionsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.fawryTransactions,
+      getReferencedColumn: (t) => t.userId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$FawryTransactionsTableFilterComposer(
+            $db: $db,
+            $table: $db.fawryTransactions,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -17549,6 +18487,32 @@ class $$UsersTableAnnotationComposer
     );
     return f(composer);
   }
+
+  Expression<T> fawryTransactionsRefs<T extends Object>(
+    Expression<T> Function($$FawryTransactionsTableAnnotationComposer a) f,
+  ) {
+    final $$FawryTransactionsTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.id,
+          referencedTable: $db.fawryTransactions,
+          getReferencedColumn: (t) => t.userId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$FawryTransactionsTableAnnotationComposer(
+                $db: $db,
+                $table: $db.fawryTransactions,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return f(composer);
+  }
 }
 
 class $$UsersTableTableManager
@@ -17578,6 +18542,7 @@ class $$UsersTableTableManager
             bool salesReturnsRefs,
             bool purchaseReturnsRefs,
             bool salaryPaymentsRefs,
+            bool fawryTransactionsRefs,
           })
         > {
   $$UsersTableTableManager(_$AppDatabase db, $UsersTable table)
@@ -17648,6 +18613,7 @@ class $$UsersTableTableManager
                 salesReturnsRefs = false,
                 purchaseReturnsRefs = false,
                 salaryPaymentsRefs = false,
+                fawryTransactionsRefs = false,
               }) {
                 return PrefetchHooks(
                   db: db,
@@ -17665,6 +18631,7 @@ class $$UsersTableTableManager
                     if (salesReturnsRefs) db.salesReturns,
                     if (purchaseReturnsRefs) db.purchaseReturns,
                     if (salaryPaymentsRefs) db.salaryPayments,
+                    if (fawryTransactionsRefs) db.fawryTransactions,
                   ],
                   addJoins: null,
                   getPrefetchedDataCallback: (items) async {
@@ -17930,6 +18897,27 @@ class $$UsersTableTableManager
                               ),
                           typedResults: items,
                         ),
+                      if (fawryTransactionsRefs)
+                        await $_getPrefetchedData<
+                          User,
+                          $UsersTable,
+                          FawryTransaction
+                        >(
+                          currentTable: table,
+                          referencedTable: $$UsersTableReferences
+                              ._fawryTransactionsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$UsersTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).fawryTransactionsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.userId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
                     ];
                   },
                 );
@@ -17964,6 +18952,7 @@ typedef $$UsersTableProcessedTableManager =
         bool salesReturnsRefs,
         bool purchaseReturnsRefs,
         bool salaryPaymentsRefs,
+        bool fawryTransactionsRefs,
       })
     >;
 typedef $$PermissionsTableCreateCompanionBuilder =
@@ -33548,6 +34537,595 @@ typedef $$SalaryPaymentsTableProcessedTableManager =
       SalaryPayment,
       PrefetchHooks Function({bool workerId, bool userId})
     >;
+typedef $$FawryMachineTableCreateCompanionBuilder =
+    FawryMachineCompanion Function({
+      Value<int> id,
+      Value<double> digitalBalance,
+      Value<double> cashCollected,
+      Value<double> totalProfits,
+      Value<DateTime> updatedAt,
+    });
+typedef $$FawryMachineTableUpdateCompanionBuilder =
+    FawryMachineCompanion Function({
+      Value<int> id,
+      Value<double> digitalBalance,
+      Value<double> cashCollected,
+      Value<double> totalProfits,
+      Value<DateTime> updatedAt,
+    });
+
+class $$FawryMachineTableFilterComposer
+    extends Composer<_$AppDatabase, $FawryMachineTable> {
+  $$FawryMachineTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get digitalBalance => $composableBuilder(
+    column: $table.digitalBalance,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get cashCollected => $composableBuilder(
+    column: $table.cashCollected,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get totalProfits => $composableBuilder(
+    column: $table.totalProfits,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$FawryMachineTableOrderingComposer
+    extends Composer<_$AppDatabase, $FawryMachineTable> {
+  $$FawryMachineTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get digitalBalance => $composableBuilder(
+    column: $table.digitalBalance,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get cashCollected => $composableBuilder(
+    column: $table.cashCollected,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get totalProfits => $composableBuilder(
+    column: $table.totalProfits,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$FawryMachineTableAnnotationComposer
+    extends Composer<_$AppDatabase, $FawryMachineTable> {
+  $$FawryMachineTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<double> get digitalBalance => $composableBuilder(
+    column: $table.digitalBalance,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get cashCollected => $composableBuilder(
+    column: $table.cashCollected,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get totalProfits => $composableBuilder(
+    column: $table.totalProfits,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$FawryMachineTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $FawryMachineTable,
+          FawryMachineData,
+          $$FawryMachineTableFilterComposer,
+          $$FawryMachineTableOrderingComposer,
+          $$FawryMachineTableAnnotationComposer,
+          $$FawryMachineTableCreateCompanionBuilder,
+          $$FawryMachineTableUpdateCompanionBuilder,
+          (
+            FawryMachineData,
+            BaseReferences<_$AppDatabase, $FawryMachineTable, FawryMachineData>,
+          ),
+          FawryMachineData,
+          PrefetchHooks Function()
+        > {
+  $$FawryMachineTableTableManager(_$AppDatabase db, $FawryMachineTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$FawryMachineTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$FawryMachineTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$FawryMachineTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<double> digitalBalance = const Value.absent(),
+                Value<double> cashCollected = const Value.absent(),
+                Value<double> totalProfits = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+              }) => FawryMachineCompanion(
+                id: id,
+                digitalBalance: digitalBalance,
+                cashCollected: cashCollected,
+                totalProfits: totalProfits,
+                updatedAt: updatedAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<double> digitalBalance = const Value.absent(),
+                Value<double> cashCollected = const Value.absent(),
+                Value<double> totalProfits = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+              }) => FawryMachineCompanion.insert(
+                id: id,
+                digitalBalance: digitalBalance,
+                cashCollected: cashCollected,
+                totalProfits: totalProfits,
+                updatedAt: updatedAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$FawryMachineTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $FawryMachineTable,
+      FawryMachineData,
+      $$FawryMachineTableFilterComposer,
+      $$FawryMachineTableOrderingComposer,
+      $$FawryMachineTableAnnotationComposer,
+      $$FawryMachineTableCreateCompanionBuilder,
+      $$FawryMachineTableUpdateCompanionBuilder,
+      (
+        FawryMachineData,
+        BaseReferences<_$AppDatabase, $FawryMachineTable, FawryMachineData>,
+      ),
+      FawryMachineData,
+      PrefetchHooks Function()
+    >;
+typedef $$FawryTransactionsTableCreateCompanionBuilder =
+    FawryTransactionsCompanion Function({
+      Value<int> id,
+      required String type,
+      required double amount,
+      Value<double?> customerPaid,
+      Value<double> profit,
+      Value<String?> description,
+      Value<int?> userId,
+      Value<DateTime> createdAt,
+    });
+typedef $$FawryTransactionsTableUpdateCompanionBuilder =
+    FawryTransactionsCompanion Function({
+      Value<int> id,
+      Value<String> type,
+      Value<double> amount,
+      Value<double?> customerPaid,
+      Value<double> profit,
+      Value<String?> description,
+      Value<int?> userId,
+      Value<DateTime> createdAt,
+    });
+
+final class $$FawryTransactionsTableReferences
+    extends
+        BaseReferences<
+          _$AppDatabase,
+          $FawryTransactionsTable,
+          FawryTransaction
+        > {
+  $$FawryTransactionsTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $UsersTable _userIdTable(_$AppDatabase db) => db.users.createAlias(
+    $_aliasNameGenerator(db.fawryTransactions.userId, db.users.id),
+  );
+
+  $$UsersTableProcessedTableManager? get userId {
+    final $_column = $_itemColumn<int>('user_id');
+    if ($_column == null) return null;
+    final manager = $$UsersTableTableManager(
+      $_db,
+      $_db.users,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_userIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$FawryTransactionsTableFilterComposer
+    extends Composer<_$AppDatabase, $FawryTransactionsTable> {
+  $$FawryTransactionsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get type => $composableBuilder(
+    column: $table.type,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get amount => $composableBuilder(
+    column: $table.amount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get customerPaid => $composableBuilder(
+    column: $table.customerPaid,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get profit => $composableBuilder(
+    column: $table.profit,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get description => $composableBuilder(
+    column: $table.description,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$UsersTableFilterComposer get userId {
+    final $$UsersTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.userId,
+      referencedTable: $db.users,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$UsersTableFilterComposer(
+            $db: $db,
+            $table: $db.users,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$FawryTransactionsTableOrderingComposer
+    extends Composer<_$AppDatabase, $FawryTransactionsTable> {
+  $$FawryTransactionsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get type => $composableBuilder(
+    column: $table.type,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get amount => $composableBuilder(
+    column: $table.amount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get customerPaid => $composableBuilder(
+    column: $table.customerPaid,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get profit => $composableBuilder(
+    column: $table.profit,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get description => $composableBuilder(
+    column: $table.description,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$UsersTableOrderingComposer get userId {
+    final $$UsersTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.userId,
+      referencedTable: $db.users,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$UsersTableOrderingComposer(
+            $db: $db,
+            $table: $db.users,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$FawryTransactionsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $FawryTransactionsTable> {
+  $$FawryTransactionsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get type =>
+      $composableBuilder(column: $table.type, builder: (column) => column);
+
+  GeneratedColumn<double> get amount =>
+      $composableBuilder(column: $table.amount, builder: (column) => column);
+
+  GeneratedColumn<double> get customerPaid => $composableBuilder(
+    column: $table.customerPaid,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get profit =>
+      $composableBuilder(column: $table.profit, builder: (column) => column);
+
+  GeneratedColumn<String> get description => $composableBuilder(
+    column: $table.description,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  $$UsersTableAnnotationComposer get userId {
+    final $$UsersTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.userId,
+      referencedTable: $db.users,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$UsersTableAnnotationComposer(
+            $db: $db,
+            $table: $db.users,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$FawryTransactionsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $FawryTransactionsTable,
+          FawryTransaction,
+          $$FawryTransactionsTableFilterComposer,
+          $$FawryTransactionsTableOrderingComposer,
+          $$FawryTransactionsTableAnnotationComposer,
+          $$FawryTransactionsTableCreateCompanionBuilder,
+          $$FawryTransactionsTableUpdateCompanionBuilder,
+          (FawryTransaction, $$FawryTransactionsTableReferences),
+          FawryTransaction,
+          PrefetchHooks Function({bool userId})
+        > {
+  $$FawryTransactionsTableTableManager(
+    _$AppDatabase db,
+    $FawryTransactionsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$FawryTransactionsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$FawryTransactionsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$FawryTransactionsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> type = const Value.absent(),
+                Value<double> amount = const Value.absent(),
+                Value<double?> customerPaid = const Value.absent(),
+                Value<double> profit = const Value.absent(),
+                Value<String?> description = const Value.absent(),
+                Value<int?> userId = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+              }) => FawryTransactionsCompanion(
+                id: id,
+                type: type,
+                amount: amount,
+                customerPaid: customerPaid,
+                profit: profit,
+                description: description,
+                userId: userId,
+                createdAt: createdAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String type,
+                required double amount,
+                Value<double?> customerPaid = const Value.absent(),
+                Value<double> profit = const Value.absent(),
+                Value<String?> description = const Value.absent(),
+                Value<int?> userId = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+              }) => FawryTransactionsCompanion.insert(
+                id: id,
+                type: type,
+                amount: amount,
+                customerPaid: customerPaid,
+                profit: profit,
+                description: description,
+                userId: userId,
+                createdAt: createdAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$FawryTransactionsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({userId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (userId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.userId,
+                                referencedTable:
+                                    $$FawryTransactionsTableReferences
+                                        ._userIdTable(db),
+                                referencedColumn:
+                                    $$FawryTransactionsTableReferences
+                                        ._userIdTable(db)
+                                        .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$FawryTransactionsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $FawryTransactionsTable,
+      FawryTransaction,
+      $$FawryTransactionsTableFilterComposer,
+      $$FawryTransactionsTableOrderingComposer,
+      $$FawryTransactionsTableAnnotationComposer,
+      $$FawryTransactionsTableCreateCompanionBuilder,
+      $$FawryTransactionsTableUpdateCompanionBuilder,
+      (FawryTransaction, $$FawryTransactionsTableReferences),
+      FawryTransaction,
+      PrefetchHooks Function({bool userId})
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -33620,4 +35198,8 @@ class $AppDatabaseManager {
       $$WorkersTableTableManager(_db, _db.workers);
   $$SalaryPaymentsTableTableManager get salaryPayments =>
       $$SalaryPaymentsTableTableManager(_db, _db.salaryPayments);
+  $$FawryMachineTableTableManager get fawryMachine =>
+      $$FawryMachineTableTableManager(_db, _db.fawryMachine);
+  $$FawryTransactionsTableTableManager get fawryTransactions =>
+      $$FawryTransactionsTableTableManager(_db, _db.fawryTransactions);
 }

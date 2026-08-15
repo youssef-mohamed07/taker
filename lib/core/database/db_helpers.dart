@@ -1559,4 +1559,130 @@ class DbHelpers {
     });
   }
 
+  // ==========================================
+  // FAWRY MANAGEMENT
+  // ==========================================
+
+  static Future<FawryMachineData> getFawryBalance(AppDatabase db) async {
+    final query = db.select(db.fawryMachine);
+    final results = await query.get();
+    if (results.isEmpty) {
+      final id = await db.into(db.fawryMachine).insert(
+            FawryMachineCompanion.insert(),
+          );
+      return (await (db.select(db.fawryMachine)..where((t) => t.id.equals(id))).getSingle());
+    }
+    return results.first;
+  }
+
+  static Stream<FawryMachineData> watchFawryBalance(AppDatabase db) {
+    return db.select(db.fawryMachine).watchSingleOrNull().map((event) {
+      if (event == null) {
+        getFawryBalance(db);
+        return FawryMachineData(id: 1, digitalBalance: 0, cashCollected: 0, totalProfits: 0, updatedAt: DateTime.now()) as dynamic;
+      }
+      return event;
+    });
+  }
+
+  static Stream<List<FawryTransaction>> watchFawryTransactions(AppDatabase db) {
+    return (db.select(db.fawryTransactions)
+          ..orderBy([(t) => OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc)]))
+        .watch();
+  }
+
+  static Future<void> executeFawryService(AppDatabase db, {
+    required double customerPaid,
+    required double machineDeducted,
+    String? description,
+    int? userId,
+  }) async {
+    await db.transaction(() async {
+      final balance = await getFawryBalance(db);
+      final profit = customerPaid - machineDeducted;
+
+      await (db.update(db.fawryMachine)..where((t) => t.id.equals(balance.id))).write(
+        FawryMachineCompanion(
+          digitalBalance: Value(balance.digitalBalance - machineDeducted),
+          cashCollected: Value(balance.cashCollected + customerPaid),
+          totalProfits: Value(balance.totalProfits + profit),
+        ),
+      );
+
+      await db.into(db.fawryTransactions).insert(
+            FawryTransactionsCompanion.insert(
+              type: 'service',
+              amount: -machineDeducted,
+              customerPaid: Value(customerPaid),
+              profit: Value(profit),
+              description: Value(description),
+              userId: Value(userId),
+            ),
+          );
+    });
+  }
+
+  static Future<void> rechargeFawryMachine(AppDatabase db, {
+    required double amount,
+    String? description,
+    int? userId,
+  }) async {
+    await db.transaction(() async {
+      final balance = await getFawryBalance(db);
+
+      await (db.update(db.fawryMachine)..where((t) => t.id.equals(balance.id))).write(
+        FawryMachineCompanion(
+          digitalBalance: Value(balance.digitalBalance + amount),
+          cashCollected: Value(balance.cashCollected - amount),
+        ),
+      );
+
+      await db.into(db.fawryTransactions).insert(
+            FawryTransactionsCompanion.insert(
+              type: 'recharge',
+              amount: amount,
+              description: Value(description),
+              userId: Value(userId),
+            ),
+          );
+
+      await addTreasuryTransaction(
+        db,
+        type: 'EXPENSE',
+        amount: amount,
+        description: 'شحن رصيد ماكينة فوري: ${description ?? ""}',
+        paymentMethod: 'cash',
+        userId: userId ?? 1,
+      );
+    });
+  }
+
+  static Future<void> deleteFawryTransaction(AppDatabase db, int txId) async {
+    await db.transaction(() async {
+      final tx = await (db.select(db.fawryTransactions)..where((t) => t.id.equals(txId))).getSingleOrNull();
+      if (tx == null) return;
+
+      final balance = await getFawryBalance(db);
+
+      if (tx.type == 'service') {
+        await (db.update(db.fawryMachine)..where((t) => t.id.equals(balance.id))).write(
+          FawryMachineCompanion(
+            digitalBalance: Value(balance.digitalBalance - tx.amount),
+            cashCollected: Value(balance.cashCollected - (tx.customerPaid ?? 0)),
+            totalProfits: Value(balance.totalProfits - tx.profit),
+          ),
+        );
+      } else if (tx.type == 'recharge') {
+        await (db.update(db.fawryMachine)..where((t) => t.id.equals(balance.id))).write(
+          FawryMachineCompanion(
+            digitalBalance: Value(balance.digitalBalance - tx.amount),
+            cashCollected: Value(balance.cashCollected + tx.amount),
+          ),
+        );
+      }
+
+      await (db.delete(db.fawryTransactions)..where((t) => t.id.equals(txId))).go();
+    });
+  }
+
 }

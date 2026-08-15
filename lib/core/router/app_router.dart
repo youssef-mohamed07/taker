@@ -1,6 +1,7 @@
 import '../../features/inventory/presentation/views/inventory_count_view.dart';
 import '../../features/users/presentation/views/users_view.dart';
 import '../../features/finance/presentation/views/expenses_view.dart';
+import '../../features/fawry/presentation/views/fawry_view.dart';
 import '../../features/sales_history/presentation/views/sales_history_view.dart';
 import '../../features/purchases/presentation/views/purchase_history_view.dart';
 import '../../features/reports/presentation/views/expiration_alerts_view.dart';
@@ -101,6 +102,10 @@ class AppRouter {
             path: '/suppliers',
             pageBuilder: (context, state) =>
                 const NoTransitionPage(child: SuppliersView()),
+          ),
+          GoRoute(
+            path: '/fawry',
+            builder: (context, state) => const FawryView(),
           ),
           GoRoute(
             path: '/treasury',

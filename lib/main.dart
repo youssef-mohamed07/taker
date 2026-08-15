@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'app.dart';
 import 'core/auth/auth_service.dart';
 import 'core/di/providers.dart';
+import 'core/database/app_database.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

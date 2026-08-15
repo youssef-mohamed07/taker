@@ -6,6 +6,7 @@ import 'package:intl/intl.dart' as intl;
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/di/providers.dart';
 import '../../../../core/database/app_database.dart';
+import '../../../../core/auth/auth_service.dart';
 
 import 'new_purchase_invoice_dialog.dart';
 class PurchasesView extends ConsumerStatefulWidget {
@@ -81,20 +82,21 @@ class _PurchasesViewState extends ConsumerState<PurchasesView> {
                     ],
                   ),
                 ),
-                ElevatedButton.icon(
-                  onPressed: () => _showNewPurchaseDialog(context, db),
-                  icon: Icon(LucideIcons.plus, size: 18),
-                  label: Text(
-                    'فاتورة شراء جديدة',
-                    style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold),
+                if (can(ref, 'purchases', 'create'))
+                  ElevatedButton.icon(
+                    onPressed: () => _showNewPurchaseDialog(context, db),
+                    icon: Icon(LucideIcons.plus, size: 18),
+                    label: Text(
+                      'فاتورة شراء جديدة',
+                      style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 14.h),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.r)),
+                    ),
                   ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 14.h),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.r)),
-                  ),
-                ),
               ],
             ),
             SizedBox(height: 24.h),

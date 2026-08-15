@@ -46,6 +46,8 @@ part 'app_database.g.dart';
     ProductBatches,
     Workers,
     SalaryPayments,
+    FawryMachine,
+    FawryTransactions,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -55,7 +57,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.withExecutor(super.executor);
 
   @override
-  int get schemaVersion => 7;
+  int get schemaVersion => 8;
 
   static String _sha256Hex(String value) =>
       sha256.convert(utf8.encode(value)).toString();
@@ -128,6 +130,12 @@ class AppDatabase extends _$AppDatabase {
           await customStatement(
             "UPDATE treasury_transactions SET payment_method = 'cash' WHERE payment_method IS NULL;",
           );
+        }
+        if (from < 8) {
+          try {
+            await m.createTable(fawryMachine);
+            await m.createTable(fawryTransactions);
+          } catch (_) {}
         }
       },
       beforeOpen: (details) async {

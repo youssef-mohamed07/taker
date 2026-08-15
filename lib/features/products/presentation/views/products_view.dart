@@ -6,6 +6,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/di/providers.dart';
 import '../../../../core/database/db_helpers.dart';
 import '../../../../core/database/app_database.dart';
+import '../../../../core/auth/auth_service.dart';
 import '../../../../core/errors/app_error_handler.dart';
 import '../../../../core/utils/barcode_scanner_handler.dart';
 
@@ -223,43 +224,45 @@ class _ProductsViewState extends ConsumerState<ProductsView> {
                     ],
                   ),
                 ),
-                ElevatedButton.icon(
-                  onPressed: _showScanBarcodeAddDialog,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.info,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
+                if (can(ref, 'products', 'create')) ...[
+                  ElevatedButton.icon(
+                    onPressed: _showScanBarcodeAddDialog,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.info,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                    ),
+                    icon: const Icon(LucideIcons.scanLine, size: 18),
+                    label: const Text(
+                      'إضافة بالباركود',
+                      style: TextStyle(
+                        fontFamily: 'Cairo',
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
-                  icon: const Icon(LucideIcons.scanLine, size: 18),
-                  label: const Text(
-                    'إضافة بالباركود',
-                    style: TextStyle(
-                      fontFamily: 'Cairo',
-                      fontWeight: FontWeight.bold,
+                  const SizedBox(width: 12),
+                  ElevatedButton.icon(
+                    onPressed: () => _showAddProductDialog(),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                    ),
+                    icon: const Icon(LucideIcons.plus, size: 18),
+                    label: const Text(
+                      'منتج جديد',
+                      style: TextStyle(
+                        fontFamily: 'Cairo',
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                ElevatedButton.icon(
-                  onPressed: () => _showAddProductDialog(),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
-                    ),
-                  ),
-                  icon: const Icon(LucideIcons.plus, size: 18),
-                  label: const Text(
-                    'منتج جديد',
-                    style: TextStyle(
-                      fontFamily: 'Cairo',
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
+                ],
               ],
             ),
             const SizedBox(height: 20),
@@ -389,7 +392,7 @@ class _ProductsViewState extends ConsumerState<ProductsView> {
                                 fontFamily: 'Cairo',
                               ),
                             ),
-                            if (products.isEmpty) ...[
+                            if (products.isEmpty && can(ref, 'products', 'create')) ...[
                               const SizedBox(height: 16),
                               ElevatedButton.icon(
                                 onPressed: _showAddProductDialog,
@@ -592,26 +595,28 @@ class _ProductsViewState extends ConsumerState<ProductsView> {
                                       onPressed: () =>
                                           _showProductDetailsDialog(product),
                                     ),
-                                    IconButton(
-                                      icon: const Icon(
-                                        LucideIcons.edit2,
-                                        size: 18,
+                                    if (can(ref, 'products', 'edit'))
+                                      IconButton(
+                                        icon: const Icon(
+                                          LucideIcons.edit2,
+                                          size: 18,
+                                        ),
+                                        color: AppColors.textSecondary,
+                                        tooltip: 'تعديل البيانات',
+                                        onPressed: () =>
+                                            _showEditProductDialog(product),
                                       ),
-                                      color: AppColors.textSecondary,
-                                      tooltip: 'تعديل البيانات',
-                                      onPressed: () =>
-                                          _showEditProductDialog(product),
-                                    ),
-                                    IconButton(
-                                      icon: const Icon(
-                                        LucideIcons.trash2,
-                                        size: 18,
+                                    if (can(ref, 'products', 'delete'))
+                                      IconButton(
+                                        icon: const Icon(
+                                          LucideIcons.trash2,
+                                          size: 18,
+                                        ),
+                                        color: AppColors.error,
+                                        tooltip: 'حذف المنتج',
+                                        onPressed: () =>
+                                            _confirmDeleteProduct(product),
                                       ),
-                                      color: AppColors.error,
-                                      tooltip: 'حذف المنتج',
-                                      onPressed: () =>
-                                          _confirmDeleteProduct(product),
-                                    ),
                                   ],
                                 ),
                               ],

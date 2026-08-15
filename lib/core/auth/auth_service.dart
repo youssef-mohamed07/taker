@@ -27,6 +27,7 @@ const List<String> appModules = [
   'inventory-count',
   'expiration-alerts',
   'suppliers',
+  'fawry',
   'treasury',
   'expenses',
   'shifts',
@@ -52,6 +53,7 @@ const Map<String, String> moduleLabels = {
   'inventory-count': 'جرد المخزون',
   'expiration-alerts': 'تنبيهات الصلاحية',
   'suppliers': 'الموردون',
+  'fawry': 'إدارة فوري',
   'treasury': 'الخزنة',
   'expenses': 'المصروفات',
   'shifts': 'الشيفتات',
@@ -61,6 +63,61 @@ const Map<String, String> moduleLabels = {
   'users': 'المستخدمين',
   'audit': 'سجل العمليات',
 };
+
+/// Default permissions per role, applied when creating a user or when the
+/// role changes. Keeps non-admin roles scoped to their own job.
+const Map<String, Map<String, List<String>>> roleDefaults = {
+  'cashier': {
+    'dashboard': ['view'],
+    'pos': ['view', 'create'],
+    'sales-history': ['view'],
+    'customers': ['view', 'create'],
+    'returns': ['view', 'create'],
+    'shifts': ['view'],
+    'products': ['view'],
+    'suppliers': ['view'],
+    'purchases': ['view', 'create'],
+    'purchase-history': ['view'],
+    'expenses': ['view', 'create'],
+    'fawry': ['view', 'create'],
+    'treasury': ['view'],
+  },
+  'accountant': {
+    'dashboard': ['view'],
+    'pos': ['view'],
+    'sales-history': ['view'],
+    'customers': ['view', 'create', 'edit'],
+    'suppliers': ['view', 'create', 'edit'],
+    'treasury': ['view', 'create'],
+    'expenses': ['view', 'create'],
+    'shifts': ['view', 'create'],
+    'reports': ['view'],
+    'partners': ['view'],
+  },
+  'storekeeper': {
+    'dashboard': ['view'],
+    'products': ['view', 'create', 'edit'],
+    'categories': ['view', 'create', 'edit'],
+    'purchases': ['view', 'create'],
+    'purchase-history': ['view'],
+    'inventory': ['view'],
+    'inventory-count': ['view', 'create'],
+    'expiration-alerts': ['view'],
+    'suppliers': ['view', 'create'],
+    'returns': ['view', 'create'],
+  },
+};
+
+/// Effective permission map for a role (module -> allowed ops).
+/// Admins get everything on every module.
+Map<String, List<String>> defaultPermissionsForRole(String role) {
+  if (role == 'admin') {
+    return {
+      for (final m in appModules) m: const ['view', 'create', 'edit', 'delete'],
+    };
+  }
+  return roleDefaults[role] ?? {};
+}
 
 class AuthService {
   AuthService._();

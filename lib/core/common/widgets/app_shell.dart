@@ -92,12 +92,22 @@ class AppShell extends ConsumerWidget {
         AuthService.hasPermission(user, perms, module, 'view');
 
     final List<Widget> navChildren = [];
-    void section(String title) =>
-        navChildren.add(_buildSectionHeader(context, title, isCollapsed));
+    Widget? pendingSection;
+
+    void section(String title) {
+      pendingSection = _buildSectionHeader(context, title, isCollapsed);
+    }
+
     void item(IconData icon, String label, String path,
         {bool isFullScreen = false}) {
       final module = path.replaceFirst('/', '');
       if (!allowed(module)) return;
+      
+      if (pendingSection != null) {
+        navChildren.add(pendingSection!);
+        pendingSection = null;
+      }
+
       navChildren.add(_buildNavItem(
         context,
         icon: icon,
@@ -125,6 +135,9 @@ class AppShell extends ConsumerWidget {
     item(LucideIcons.alarmClock, 'تنبيهات الصلاحية', '/expiration-alerts');
     item(LucideIcons.truck, 'الموردون', '/suppliers');
     section('المالية');
+    if (can(ref, 'fawry', 'view')) {
+      item(LucideIcons.plug, 'إدارة فوري', '/fawry');
+    }
     item(LucideIcons.wallet, 'الخزنة', '/treasury');
     item(LucideIcons.receipt, 'المصروفات', '/expenses');
     item(LucideIcons.clock, 'الشيفتات', '/shifts');

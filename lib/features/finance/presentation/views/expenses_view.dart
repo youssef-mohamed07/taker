@@ -8,6 +8,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/database/app_database.dart';
 import '../../../../core/database/db_helpers.dart';
 import '../../../../core/di/providers.dart';
+import '../../../../core/auth/auth_service.dart';
 import '../../../../core/errors/app_error_handler.dart';
 
 class ExpensesView extends ConsumerStatefulWidget {
@@ -51,27 +52,29 @@ class _ExpensesViewState extends ConsumerState<ExpensesView> {
                       label: const Text('فئات المصروفات', style: TextStyle(fontFamily: 'Cairo')),
                     ),
                     SizedBox(width: 8.w),
+                    if (can(ref, 'expenses', 'create'))
+                      ElevatedButton.icon(
+                        onPressed: () => _showAddExpenseDialog(context),
+                        icon: const Icon(LucideIcons.plus),
+                        label: const Text('تسجيل مصروف جديد', style: TextStyle(fontFamily: 'Cairo')),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white,
+                        ),
+                      ),
+                  ],
+                  )
+                else
+                  if (can(ref, 'expenses', 'create'))
                     ElevatedButton.icon(
-                      onPressed: () => _showAddExpenseDialog(context),
-                      icon: const Icon(LucideIcons.plus),
-                      label: const Text('تسجيل مصروف جديد', style: TextStyle(fontFamily: 'Cairo')),
+                      onPressed: () => _showWorkerFormDialog(context, null),
+                      icon: const Icon(LucideIcons.userPlus),
+                      label: const Text('إضافة عامل جديد', style: TextStyle(fontFamily: 'Cairo')),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
                         foregroundColor: Colors.white,
                       ),
                     ),
-                  ],
-                  )
-                else
-                  ElevatedButton.icon(
-                    onPressed: () => _showWorkerFormDialog(context, null),
-                    icon: const Icon(LucideIcons.userPlus),
-                    label: const Text('إضافة عامل جديد', style: TextStyle(fontFamily: 'Cairo')),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: Colors.white,
-                    ),
-                  ),
               ],
             ),
             SizedBox(height: 24.h),

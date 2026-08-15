@@ -486,8 +486,8 @@ class DashboardView extends ConsumerWidget {
             child: LayoutBuilder(
               builder: (context, constraints) {
                 // Space consumed by the value label, day label and paddings.
-                // Labels use height: 1.0 so their rendered height equals fontSize.
-                final labelSpace = (16.sp + 6.h) + (8.h + 16.sp) + 4;
+                // Added a safe margin of 20 to prevent RenderFlex overflows.
+                final labelSpace = (16.sp + 6.h) + (8.h + 16.sp) + 24.0;
                 final availableBarHeight =
                     (constraints.maxHeight - labelSpace).clamp(10.0, constraints.maxHeight);
                 return Row(

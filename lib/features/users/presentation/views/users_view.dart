@@ -292,16 +292,18 @@ class _AddUserDialogState extends ConsumerState<AddUserDialog> {
         )
       );
 
-      // Create a permission row for every module (view on by default).
+      // Create a permission row for every module based on the role defaults.
+      final rolePerms = defaultPermissionsForRole(_role);
       for (final mod in appModules) {
+        final ops = rolePerms[mod] ?? const [];
         await db.into(db.permissions).insert(
           PermissionsCompanion.insert(
             userId: userId,
             module: mod,
-            canView: const drift.Value(true),
-            canCreate: const drift.Value(false),
-            canEdit: const drift.Value(false),
-            canDelete: const drift.Value(false),
+            canView: drift.Value(ops.contains('view')),
+            canCreate: drift.Value(ops.contains('create')),
+            canEdit: drift.Value(ops.contains('edit')),
+            canDelete: drift.Value(ops.contains('delete')),
           )
         );
       }
@@ -384,6 +386,25 @@ class _EditUserDialogState extends ConsumerState<EditUserDialog> {
                 role: drift.Value(_role),
               ),
             );
+            // Changing the role resets permissions to that role's defaults.
+            if (_role != widget.user.role) {
+              await (db.delete(db.permissions)..where((t) => t.userId.equals(widget.user.id))).go();
+              final rolePerms = defaultPermissionsForRole(_role);
+              for (final mod in appModules) {
+                final ops = rolePerms[mod] ?? const [];
+                await db.into(db.permissions).insert(
+                  PermissionsCompanion.insert(
+                    userId: widget.user.id,
+                    module: mod,
+                    canView: drift.Value(ops.contains('view')),
+                    canCreate: drift.Value(ops.contains('create')),
+                    canEdit: drift.Value(ops.contains('edit')),
+                    canDelete: drift.Value(ops.contains('delete')),
+                  )
+                );
+              }
+              await DbHelpers.logAudit(db, userId: actorId, action: 'UPDATE', targetTable: 'permissions', recordId: widget.user.id, details: 'إعادة تعيين صلاحيات ${widget.user.username} حسب الدور الجديد $_role');
+            }
             await DbHelpers.logAudit(db, userId: actorId, action: 'UPDATE', targetTable: 'users', recordId: widget.user.id, details: 'تعديل بيانات ${_usernameController.text}');
             if (context.mounted) Navigator.pop(context);
           },
@@ -417,14 +438,20 @@ class _UserPermissionsDialogState extends ConsumerState<UserPermissionsDialog> {
     final perms = await (db.select(db.permissions)..where((t) => t.userId.equals(widget.user.id))).get();
 
     // Ensure a row exists for every module so nothing is unreachable to edit.
+    // Missing rows default to the user's role permissions, not open access.
     final existing = perms.map((p) => p.module).toSet();
+    final rolePerms = defaultPermissionsForRole(widget.user.role);
     for (final mod in appModules) {
       if (!existing.contains(mod)) {
+        final ops = rolePerms[mod] ?? const [];
         await db.into(db.permissions).insert(
           PermissionsCompanion.insert(
             userId: widget.user.id,
             module: mod,
-            canView: const drift.Value(true),
+            canView: drift.Value(ops.contains('view')),
+            canCreate: drift.Value(ops.contains('create')),
+            canEdit: drift.Value(ops.contains('edit')),
+            canDelete: drift.Value(ops.contains('delete')),
           ),
         );
       }

@@ -5,6 +5,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/di/providers.dart';
 import '../../../../core/database/db_helpers.dart';
 import '../../../../core/database/app_database.dart';
+import '../../../../core/auth/auth_service.dart';
 
 class SuppliersView extends ConsumerStatefulWidget {
   const SuppliersView({super.key});
@@ -262,14 +263,15 @@ class _SuppliersViewState extends ConsumerState<SuppliersView> {
                     ],
                   ),
                 ),
-                ElevatedButton.icon(
-                  onPressed: _showAddSupplierDialog,
-                  icon: const Icon(LucideIcons.plus, size: 16),
-                  label: const Text(
-                    'مورد جديد',
-                    style: TextStyle(fontFamily: 'Cairo'),
+                if (can(ref, 'suppliers', 'create'))
+                  ElevatedButton.icon(
+                    onPressed: _showAddSupplierDialog,
+                    icon: const Icon(LucideIcons.plus, size: 16),
+                    label: const Text(
+                      'مورد جديد',
+                      style: TextStyle(fontFamily: 'Cairo'),
+                    ),
                   ),
-                ),
               ],
             ),
             const SizedBox(height: 20),
@@ -336,7 +338,7 @@ class _SuppliersViewState extends ConsumerState<SuppliersView> {
                                 fontFamily: 'Cairo',
                               ),
                             ),
-                            if (suppliers.isEmpty) ...[
+                            if (suppliers.isEmpty && can(ref, 'suppliers', 'create')) ...[
                               const SizedBox(height: 16),
                               ElevatedButton.icon(
                                 onPressed: _showAddSupplierDialog,
@@ -472,7 +474,7 @@ class _SuppliersViewState extends ConsumerState<SuppliersView> {
                                 Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    if (supplier.balance > 0)
+                                    if (supplier.balance > 0 && can(ref, 'suppliers', 'edit'))
                                       IconButton(
                                         icon: const Icon(LucideIcons.wallet, size: 18),
                                         tooltip: 'سداد دفعة',
@@ -488,22 +490,24 @@ class _SuppliersViewState extends ConsumerState<SuppliersView> {
                                       onPressed: () =>
                                           _showSupplierDetailsDialog(supplier),
                                     ),
-                                    IconButton(
-                                      icon: const Icon(LucideIcons.edit2,
-                                          size: 18),
-                                      color: AppColors.textSecondary,
-                                      tooltip: 'تعديل البيانات',
-                                      onPressed: () =>
-                                          _showEditSupplierDialog(supplier),
-                                    ),
-                                    IconButton(
-                                      icon: const Icon(LucideIcons.trash2,
-                                          size: 18),
-                                      color: AppColors.error,
-                                      tooltip: 'حذف المورد',
-                                      onPressed: () =>
-                                          _confirmDeleteSupplier(supplier),
-                                    ),
+                                    if (can(ref, 'suppliers', 'edit'))
+                                      IconButton(
+                                        icon: const Icon(LucideIcons.edit2,
+                                            size: 18),
+                                        color: AppColors.textSecondary,
+                                        tooltip: 'تعديل البيانات',
+                                        onPressed: () =>
+                                            _showEditSupplierDialog(supplier),
+                                      ),
+                                    if (can(ref, 'suppliers', 'delete'))
+                                      IconButton(
+                                        icon: const Icon(LucideIcons.trash2,
+                                            size: 18),
+                                        color: AppColors.error,
+                                        tooltip: 'حذف المورد',
+                                        onPressed: () =>
+                                            _confirmDeleteSupplier(supplier),
+                                      ),
                                   ],
                                 ),
                               ],

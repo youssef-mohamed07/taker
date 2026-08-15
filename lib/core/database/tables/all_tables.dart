@@ -6,3 +6,4 @@ export 'purchase_tables.dart';
 export 'inventory_tables.dart';
 export 'finance_tables.dart';
 export 'system_tables.dart';
+export 'fawry_tables.dart';
